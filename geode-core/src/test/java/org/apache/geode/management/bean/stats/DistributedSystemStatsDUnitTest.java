@@ -14,98 +14,70 @@
  */
 package org.apache.geode.management.bean.stats;
 
-import org.junit.experimental.categories.Category;
-import org.junit.Test;
-
+import static com.jayway.awaitility.Awaitility.*;
 import static org.junit.Assert.*;
 
-import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
-import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
-import org.apache.geode.test.junit.categories.DistributedTest;
-
+import java.lang.management.ManagementFactory;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
 import org.apache.geode.distributed.DistributedMember;
-import org.apache.geode.internal.cache.DiskStoreStats;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.management.DistributedSystemMXBean;
-import org.apache.geode.management.ManagementTestBase;
+import org.apache.geode.management.ManagementService;
+import org.apache.geode.management.ManagementTestRule;
+import org.apache.geode.management.Manager;
+import org.apache.geode.management.Member;
 import org.apache.geode.management.MemberMXBean;
 import org.apache.geode.management.internal.SystemManagementService;
-import org.apache.geode.management.internal.beans.MemberMBean;
-import org.apache.geode.management.internal.beans.MemberMBeanBridge;
-import org.apache.geode.test.dunit.Assert;
-import org.apache.geode.test.dunit.SerializableRunnable;
 import org.apache.geode.test.dunit.VM;
+import org.apache.geode.test.junit.categories.DistributedTest;
 
-/**
- */
 @Category(DistributedTest.class)
-public class DistributedSystemStatsDUnitTest extends ManagementTestBase {
+@SuppressWarnings({"unused", "serial"})
+public class DistributedSystemStatsDUnitTest {
 
-  private static final long serialVersionUID = 1L;
+  @Manager
+  private VM manager;
 
-  public DistributedSystemStatsDUnitTest() {
-    super();
-  }
+  @Member
+  private VM[] members;
+
+  @Rule
+  public ManagementTestRule managementTestRule = ManagementTestRule.builder().start(true).build();
 
   @Test
   public void testDistributedSystemStats() throws Exception {
-    initManagement(true);
+    this.manager.invoke("verifyMBeans", () -> {
+      GemFireCacheImpl cache = GemFireCacheImpl.getInstance();
+      assertNotNull(cache);
 
-    for (VM vm : managedNodeList) {
-      setDiskStats(vm);
-    }
-    verifyDiskStats(managingNode);
-  }
+      SystemManagementService service =
+          (SystemManagementService) ManagementService.getManagementService(cache);
+      DistributedSystemMXBean distributedSystemMXBean = service.getDistributedSystemMXBean();
+      assertNotNull(distributedSystemMXBean);
 
-  @SuppressWarnings("serial")
-  public void setDiskStats(VM vm1) throws Exception {
-    vm1.invoke(new SerializableRunnable("Set Member Stats") {
-      public void run() {
-        MemberMBean bean = (MemberMBean) managementService.getMemberMXBean();
-        MemberMBeanBridge bridge = bean.getBridge();
-        DiskStoreStats diskStoreStats = new DiskStoreStats(basicGetSystem(), "test");
-        bridge.addDiskStoreStats(diskStoreStats);
-        diskStoreStats.startRead();
-        diskStoreStats.startWrite();
-        diskStoreStats.startBackup();
-        diskStoreStats.startRecovery();
-        diskStoreStats.incWrittenBytes(20, true);
-        diskStoreStats.startFlush();
-        diskStoreStats.setQueueSize(10);
-      }
-    });
-  }
+      Set<DistributedMember> otherMemberSet =
+          cache.getDistributionManager().getOtherNormalDistributionManagerIds();
+      assertEquals(3, otherMemberSet.size());
 
-  @SuppressWarnings("serial")
-  public void verifyDiskStats(VM vm1) throws Exception {
-    vm1.invoke(new SerializableRunnable("Set Member Stats") {
-      public void run() {
-        GemFireCacheImpl cache = GemFireCacheImpl.getInstance();
+      for (DistributedMember member : otherMemberSet) {
+        ObjectName memberMXBeanName = service.getMemberMBeanName(member);
+        await().atMost(2, TimeUnit.MINUTES).until(() -> assertTrue(
+            ManagementFactory.getPlatformMBeanServer().isRegistered(memberMXBeanName)));
 
-        SystemManagementService service = (SystemManagementService) getManagementService();
-        DistributedSystemMXBean bean = service.getDistributedSystemMXBean();
-        assertNotNull(bean);
-        Set<DistributedMember> otherMemberSet =
-            cache.getDistributionManager().getOtherNormalDistributionManagerIds();
+        MemberMXBean memberMXBean = service.getMBeanProxy(memberMXBeanName, MemberMXBean.class);
+        assertNotNull(memberMXBean);
 
-        for (DistributedMember member : otherMemberSet) {
-          ObjectName memberMBeanName;
-          try {
-            memberMBeanName = service.getMemberMBeanName(member);
-            waitForProxy(memberMBeanName, MemberMXBean.class);
-            MemberMXBean memberBean = service.getMBeanProxy(memberMBeanName, MemberMXBean.class);
-            waitForRefresh(2, memberMBeanName);
-          } catch (NullPointerException e) {
-            Assert.fail("FAILED WITH EXCEPION", e);
-          } catch (Exception e) {
-            Assert.fail("FAILED WITH EXCEPION", e);
-          }
-        }
-
+        final long lastRefreshTime = service.getLastUpdateTime(memberMXBeanName);
+        await().atMost(1, TimeUnit.MINUTES)
+            .until(() -> assertTrue(service.getLastUpdateTime(memberMXBeanName) > lastRefreshTime));
       }
     });
   }
