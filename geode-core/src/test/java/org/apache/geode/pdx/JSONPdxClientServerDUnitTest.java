@@ -14,23 +14,14 @@
  */
 package org.apache.geode.pdx;
 
-import static org.apache.geode.distributed.ConfigurationProperties.*;
-import static org.junit.Assert.*;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Properties;
+import static org.apache.geode.distributed.ConfigurationProperties.DISTRIBUTED_SYSTEM_ID;
+import static org.apache.geode.distributed.ConfigurationProperties.LOCATORS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
 import org.apache.geode.cache.AttributesFactory;
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.CacheFactory;
@@ -52,6 +43,16 @@ import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
 import org.apache.geode.test.junit.categories.DistributedTest;
 import org.apache.geode.util.test.TestUtil;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Properties;
 
 @Category(DistributedTest.class)
 public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
@@ -72,24 +73,19 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
     VM vm2 = host.getVM(2);
     VM vm3 = host.getVM(3);
 
-
     createServerRegion(vm0);
     int port = createServerRegion(vm3);
     createClientRegion(vm1, port);
     createClientRegion(vm2, port);
 
-    vm1.invoke(new SerializableCallable() {
-      public Object call() throws Exception {
-        JSONAllStringTest();
-        return null;
-      }
+    vm1.invoke(() -> {
+      JSONAllStringTest();
+      return null;
     });
 
-    vm2.invoke(new SerializableCallable() {
-      public Object call() throws Exception {
-        JSONAllByteArrayTest();
-        return null;
-      }
+    vm2.invoke(() -> {
+      JSONAllByteArrayTest();
+      return null;
     });
   }
 
@@ -100,7 +96,6 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
     VM vm1 = host.getVM(1);
     VM vm2 = host.getVM(2);
     VM vm3 = host.getVM(3);
-
 
     createServerRegion(vm0);
     int port = createServerRegion(vm3);
@@ -142,7 +137,6 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
     VM vm2 = host.getVM(2);
     VM vm3 = host.getVM(3);
 
-
     createServerRegion(vm0);
     int port = createServerRegion(vm3);
     createClientRegion(vm1, port);
@@ -170,11 +164,9 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
     createClientRegion(vm1, port, false, true);
     createClientRegion(vm2, port, false, true);
 
-    vm1.invoke(new SerializableCallable() {
-      public Object call() throws Exception {
-        VerifyPdxInstanceAndJsonConversion();
-        return null;
-      }
+    vm1.invoke(() -> {
+      VerifyPdxInstanceAndJsonConversion();
+      return null;
     });
   }
 
@@ -316,7 +308,6 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
 
   public void JSONAllStringTest(String dirname) {
 
-
     JSONData[] allJsons = loadAllJSON(dirname);
     int i = 0;
     for (JSONData jsonData : allJsons) {
@@ -362,6 +353,7 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
     public byte[] getJsonByteArray() {
       return jsonByteArray;
     }
+
   }
 
 
@@ -407,8 +399,9 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
     for (i = 0; i < ba.length; i++) {
       int cbyte = ba[i];
 
-      if (cbyte == INT_TAB || cbyte == INT_LF || cbyte == INT_CR || cbyte == INT_SPACE)
+      if (cbyte == INT_TAB || cbyte == INT_LF || cbyte == INT_CR || cbyte == INT_SPACE) {
         continue;
+      }
       withoutspace[j++] = ba[i];
     }
 
@@ -439,16 +432,19 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
   }
 
   public void compareByteArray(byte[] b1, byte[] b2) {
-    if (b1.length != b2.length)
+    if (b1.length != b2.length) {
       throw new IllegalStateException(
           "Json byte array length are not equal " + b1.length + " ; " + b2.length);
+    }
 
-    if (Boolean.getBoolean(JSONFormatter.SORT_JSON_FIELD_NAMES_PROPERTY))
+    if (Boolean.getBoolean(JSONFormatter.SORT_JSON_FIELD_NAMES_PROPERTY)) {
       return;// we just need to compare length as blob will be different because fields are sorted
+    }
 
     for (int i = 0; i < b1.length; i++) {
-      if (b1[i] != b2[i])
+      if (b1[i] != b2[i]) {
         throw new IllegalStateException("Json byte arrays are not equal ");
+      }
     }
   }
 
@@ -462,8 +458,9 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
     for (i = 0; i < ba.length; i++) {
       int cbyte = ba[i];
 
-      if (cbyte == INT_TAB || cbyte == INT_LF || cbyte == INT_CR || cbyte == INT_SPACE)
+      if (cbyte == INT_TAB || cbyte == INT_LF || cbyte == INT_CR || cbyte == INT_SPACE) {
         continue;
+      }
       withoutspace[j++] = ba[i];
     }
 
@@ -484,8 +481,9 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
     int i = 0;
     for (String jsonFileName : dir.list()) {
 
-      if (!jsonFileName.contains(".txt"))
+      if (!jsonFileName.contains(".txt")) {
         continue;
+      }
       try {
         byte[] ba = getBytesFromFile(dir.getAbsolutePath() + File.separator + jsonFileName);
         JSONDatas[i++] = new JSONData(jsonFileName, ba);
@@ -526,11 +524,9 @@ public class JSONPdxClientServerDUnitTest extends JUnit4CacheTestCase {
   }
 
   private void closeCache(VM vm) {
-    vm.invoke(new SerializableCallable() {
-      public Object call() throws Exception {
-        closeCache();
-        return null;
-      }
+    vm.invoke(() -> {
+      closeCache();
+      return null;
     });
   }
 
