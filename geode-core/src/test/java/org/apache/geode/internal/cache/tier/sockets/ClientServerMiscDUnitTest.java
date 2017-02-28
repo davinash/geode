@@ -61,7 +61,6 @@ import java.util.Set;
  * Tests client server corner cases between Region and Pool
  */
 @Category({DistributedTest.class, ClientServerTest.class})
-@RunWith(JUnitParamsRunner.class)
 public class ClientServerMiscDUnitTest extends JUnit4CacheTestCase {
 
   protected static PoolImpl pool = null;
@@ -758,9 +757,14 @@ public class ClientServerMiscDUnitTest extends JUnit4CacheTestCase {
   }
 
 
+
   @Test
-  @Parameters(method = "regionShortcut")
-  public void testProxyRegionClientServerOp(RegionShortcut shortcut) throws Exception {
+  public void testProxyRegionClientServerOp() throws Exception {
+    proxyRegionClientServerOp(RegionShortcut.PARTITION);
+    proxyRegionClientServerOp(RegionShortcut.REPLICATE);
+  }
+
+  private void proxyRegionClientServerOp(RegionShortcut shortcut) throws Exception {
     // start server first
     final String REGION_NAME = "proxyRegionClientServerOp";
     PORT1 = initServerCache(false);
@@ -809,11 +813,6 @@ public class ClientServerMiscDUnitTest extends JUnit4CacheTestCase {
     clientRegion.destroyRegion();
     clientCache.close();
   }
-
-  private RegionShortcut[] regionShortcut() {
-    return new RegionShortcut[] {RegionShortcut.PARTITION, RegionShortcut.REPLICATE};
-  }
-
 
   private void createCache(Properties props) throws Exception {
     createCacheV(props);
