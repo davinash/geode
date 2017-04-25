@@ -17,6 +17,8 @@ package org.apache.geode.internal.cache;
 
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
+import io.grpc.Server;
+import io.grpc.netty.NettyServerBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.apache.geode.CancelCriterion;
 import org.apache.geode.CancelException;
@@ -1265,6 +1267,8 @@ public class GemFireCacheImpl
     startRedisServer();
 
     startRestAgentServer(this);
+
+    startgRPCServer(this);
 
     int time = Integer.getInteger(DistributionConfig.GEMFIRE_PREFIX + "CLIENT_FUNCTION_TIMEOUT",
         DEFAULT_CLIENT_FUNCTION_TIMEOUT);
@@ -5536,4 +5540,47 @@ public class GemFireCacheImpl
   public CqService getCqService() {
     return this.cqService;
   }
+
+
+  private Server gRPCServer;
+  private static final int GRPC_SERVER_PORT = Integer.getInteger("grpc.server.port", 0);
+
+  private void startgRPCServer(GemFireCacheImpl gemFireCache) {
+    if (this.isServerNode() && GRPC_SERVER_PORT != 0) {
+      try {
+        gRPCServer = NettyServerBuilder.forPort(GRPC_SERVER_PORT)
+            .addService(new MTableServiceImpl(cache))
+            .executor(com.google.common.util.concurrent.MoreExecutors.directExecutor())
+            .build()
+            .start();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      logger.info("GRPC Server started, listening on " + GRPC_SERVER_PORT);
+
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          // Use stderr here since the logger may have been reset by its JVM shutdown hook.
+          System.err.println("*** shutting down gRPC server since JVM is shutting down");
+          GemFireCacheImpl.this.stopGRPCServer();
+
+          System.err.println("*** server shut down");
+        }
+      });
+    }
+  }
+
+  private void stopGRPCServer() {
+    if (gRPCServer != null) {
+      gRPCServer.shutdown();
+      try {
+        gRPCServer.awaitTermination(5, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+
+    }
+  }
+
 }

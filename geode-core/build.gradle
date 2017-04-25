@@ -119,11 +119,13 @@ dependencies {
 
   compile project(':geode-common')
   compile project(':geode-json')
+  compile project(':geode-proto')
 
   jcaCompile sourceSets.main.output
 
   testCompile project(':geode-junit')
   testCompile project(':geode-old-versions')
+
 
   // Test Dependencies
   // External
