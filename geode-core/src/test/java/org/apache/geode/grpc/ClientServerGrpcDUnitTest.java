@@ -18,18 +18,13 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
-import org.apache.geode.cache.Cache;
-import org.apache.geode.cache.CacheClosedException;
-import org.apache.geode.cache.CacheFactory;
-import org.apache.geode.cache.RegionShortcut;
+import org.apache.geode.cache.*;
 import org.apache.geode.cache.client.ClientCache;
 import org.apache.geode.cache.client.ClientCacheFactory;
 import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.apache.geode.cache.server.CacheServer;
 import org.apache.geode.distributed.internal.DistributionConfig;
-import org.apache.geode.generated.RegionService.PutReply;
-import org.apache.geode.generated.RegionService.PutRequest;
-import org.apache.geode.generated.RegionService.RegionServiceGrpc;
+import org.apache.geode.generated.RegionService.*;
 import org.apache.geode.internal.AvailablePortHelper;
 import org.apache.geode.internal.cache.partitioned.PutMessage;
 import org.apache.geode.internal.logging.LogService;
@@ -41,12 +36,14 @@ import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
 import org.apache.geode.test.dunit.standalone.DUnitLauncher;
 import org.apache.geode.test.junit.categories.ClientServerTest;
 import org.apache.logging.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -145,8 +142,8 @@ public class ClientServerGrpcDUnitTest extends JUnit4CacheTestCase {
 
       PutReply putReply;
       try {
-        putReply = blockingStub.put(PutRequest.newBuilder().setKey(key).setValue(val)
-            .setRegionName(REGION_NAME).build());
+        putReply = blockingStub.put(
+            PutRequest.newBuilder().setKey(key).setValue(val).setRegionName(REGION_NAME).build());
 
         assertTrue(putReply.getIsSuccess());
       } catch (StatusRuntimeException e) {
@@ -154,10 +151,32 @@ public class ClientServerGrpcDUnitTest extends JUnit4CacheTestCase {
         return;
       }
     }
+    // Verify using Geode API
+    this.vm0.invoke(() -> {
+      Cache cache = CacheFactory.getAnyInstance();
+      Region r = cache.getRegion(REGION_NAME);
+      for (int i = 0; i < 10; i++) {
+        ByteString key = ByteString.copyFrom(("Key-" + i).getBytes());
+        ByteString expectedVal = ByteString.copyFrom(("Val-" + i).getBytes());
+        Assert.assertEquals(expectedVal, r.get(key));
+      }
+    });
 
+    for (int i = 0; i < 10; i++) {
+      ByteString key = ByteString.copyFrom(("Key-" + i).getBytes());
+      ByteString expectedVal = ByteString.copyFrom(("Val-" + i).getBytes());
+      GetReply getReply;
+      try {
+        getReply = blockingStub
+            .get(GetRequest.newBuilder().setKey(key).setRegionName(REGION_NAME).build());
+        assertTrue(getReply.getIsSuccess());
+        assertEquals(expectedVal, getReply.getValue());
+      } catch (StatusRuntimeException e) {
+        logger.warn("RPC failed: {0}", e.getStatus());
+        return;
+      }
+    }
     channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-
-
     clientCache.getRegion(REGION_NAME).destroyRegion();
   }
 }

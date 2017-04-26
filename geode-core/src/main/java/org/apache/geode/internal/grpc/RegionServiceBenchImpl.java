@@ -12,35 +12,52 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package org.apache.geode.internal.grpc;
 
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import org.apache.geode.GemFireException;
+import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.cache.Region;
-import org.apache.geode.generated.RegionService.*;
+import org.apache.geode.generated.RegionServiceBenchMark.*;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.logging.LogService;
+import org.apache.geode.pdx.JSONFormatter;
+import org.apache.geode.pdx.PdxInstance;
+import org.apache.geode.pdx.PdxInstanceFactory;
 import org.apache.logging.log4j.Logger;
 
-public class RegionServiceImpl extends RegionServiceGrpc.RegionServiceImplBase {
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by adongre on 26/4/17.
+ */
+public class RegionServiceBenchImpl
+    extends RegionServiceBenchMarkGrpc.RegionServiceBenchMarkImplBase {
   private static final Logger logger = LogService.getLogger();
   private final GemFireCacheImpl cache;
 
-  public RegionServiceImpl(GemFireCacheImpl gemFireCache) {
-    cache = gemFireCache;
+  public RegionServiceBenchImpl(GemFireCacheImpl cache) {
+    this.cache = cache;
+  }
+
+  private PdxInstance convertToBytearrayMap(List<MapKeyValueEntry> values) {
+    PdxInstanceFactory pdxInstanceFactory =
+        cache.createPdxInstanceFactory(JSONFormatter.JSON_CLASSNAME);
+    values.forEach(E -> pdxInstanceFactory.writeByteArray(E.getKey(), E.getValue().toByteArray()));
+    return pdxInstanceFactory.create();
   }
 
   @Override
-  public void put(PutRequest request, StreamObserver<PutReply> responseObserver) {
+  public void putMap(PutMapRequest request, StreamObserver<PutMapReply> responseObserver) {
     Region region = cache.getRegion(request.getRegionName());
-    PutReply.Builder replyBuilder = PutReply.newBuilder();
+    PutMapReply.Builder replyBuilder = PutMapReply.newBuilder();
     if (region == null) {
       replyBuilder.setIsSuccess(false);
     } else {
       try {
-        region.put(request.getKey(), request.getValue());
+        region.put(request.getKey(), convertToBytearrayMap(request.getMapFieldsList()));
         replyBuilder.setIsSuccess(true);
       } catch (GemFireException e) {
         logger.error("RegionServiceImpl::put", e);
@@ -52,16 +69,26 @@ public class RegionServiceImpl extends RegionServiceGrpc.RegionServiceImplBase {
   }
 
   @Override
-  public void get(GetRequest request, StreamObserver<GetReply> responseObserver) {
+  public void getMap(GetMapRequest request, StreamObserver<GetMapReply> responseObserver) {
     Region region = cache.getRegion(request.getRegionName());
-    GetReply.Builder replyBuilder = GetReply.newBuilder();
+    GetMapReply.Builder replyBuilder = GetMapReply.newBuilder();
     if (region == null) {
       replyBuilder.setIsSuccess(false);
     } else {
       try {
-        ByteString val = (ByteString) region.get(request.getKey());
-        replyBuilder.setValue(val);
-        replyBuilder.setIsSuccess(true);
+        PdxInstance val = (PdxInstance) region.get(request.getKey());
+        if (val != null) {
+          int index = 0;
+          for (String fieldName : val.getFieldNames()) {
+            byte[] v = (byte[]) val.getField(fieldName);
+
+            replyBuilder.setMapFields(index++,
+                MapKeyValueEntry.newBuilder().setKey(fieldName).setValue(ByteString.copyFrom(v)));
+          }
+          replyBuilder.setIsSuccess(true);
+        } else {
+          replyBuilder.setIsSuccess(false);
+        }
       } catch (GemFireException e) {
         logger.error("RegionServiceImpl::get", e);
         replyBuilder.setIsSuccess(false);

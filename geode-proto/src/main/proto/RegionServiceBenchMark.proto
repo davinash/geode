@@ -6,36 +6,44 @@ option java_multiple_files = true;
 // (specified using the "package" keyword in the .proto file) will be used. However, proto packages generally
 // do not make good Java packages since proto packages are not expected to start with reverse domain names.
 // If not generating Java code, this option has no effect.
-option java_package = "org.apache.geode.generated.RegionService";
+option java_package = "org.apache.geode.generated.RegionServiceBenchMark";
 // objc_class_prefix (file option): Sets the Objective-C class prefix which is prepended to all Objective-C generated
 // classes and enums from this .proto. There is no default. You should use prefixes that are between 3-5
 // uppercase characters as recommended by Apple. Note that all 2 letter prefixes are reserved by Apple.
 option objc_class_prefix = "Geode";
 
-service RegionService {
-    // Perform the put operation
-    rpc put (PutRequest) returns (PutReply) {
+service RegionServiceBenchMark {
+    // Adding Separate
+    rpc putMap (PutMapRequest) returns (PutMapReply) {
     }
-    // Perform the get operation
-    rpc get (GetRequest) returns (GetReply) {
+    rpc getMap (GetMapRequest) returns (GetMapReply) {
     }
 }
 
-message PutRequest {
-    string regionName = 1;
-    bytes key = 2;
-    bytes value = 3;
-}
-
-message PutReply {
-    bool isSuccess = 1;
-}
-
-message GetRequest {
-    string regionName = 1;
-    bytes key = 2;
-}
-message GetReply {
-    bool isSuccess = 1;
+message MapKeyValueEntry {
+    string key = 1;
     bytes value = 2;
 }
+
+message PutMapRequest {
+    string regionName = 1;
+    bytes key = 2;
+    repeated MapKeyValueEntry mapFields = 3;
+}
+
+message PutMapReply {
+    bool isSuccess = 1;
+}
+
+message GetMapRequest {
+    string regionName = 1;
+    bytes key = 2;
+}
+
+message GetMapReply {
+    bool isSuccess = 1;
+    repeated MapKeyValueEntry mapFields = 2;
+}
+
+
+

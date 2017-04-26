@@ -144,6 +144,7 @@ import org.apache.geode.internal.cache.xmlcache.CacheXmlParser;
 import org.apache.geode.internal.cache.xmlcache.CacheXmlPropertyResolver;
 import org.apache.geode.internal.cache.xmlcache.PropertyResolver;
 import org.apache.geode.internal.concurrent.ConcurrentHashSet;
+import org.apache.geode.internal.grpc.RegionServiceBenchImpl;
 import org.apache.geode.internal.grpc.RegionServiceImpl;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.jndi.JNDIInvoker;
@@ -5554,6 +5555,7 @@ public class GemFireCacheImpl
       try {
         this.gRPCServer =
             ServerBuilder.forPort(GRPC_SERVER_PORT).addService(new RegionServiceImpl(geodeCache))
+                .addService(new RegionServiceBenchImpl(geodeCache))
                 .executor(com.google.common.util.concurrent.MoreExecutors.directExecutor()).build()
                 .start();
       } catch (IOException e) {
