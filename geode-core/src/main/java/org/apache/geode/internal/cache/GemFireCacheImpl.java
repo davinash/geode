@@ -18,6 +18,7 @@ package org.apache.geode.internal.cache;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import io.grpc.Server;
+import io.grpc.ServerBuilder;
 import io.grpc.netty.NettyServerBuilder;
 import org.apache.commons.lang.StringUtils;
 import org.apache.geode.CancelCriterion;
@@ -143,6 +144,7 @@ import org.apache.geode.internal.cache.xmlcache.CacheXmlParser;
 import org.apache.geode.internal.cache.xmlcache.CacheXmlPropertyResolver;
 import org.apache.geode.internal.cache.xmlcache.PropertyResolver;
 import org.apache.geode.internal.concurrent.ConcurrentHashSet;
+import org.apache.geode.internal.grpc.RegionServiceImpl;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.jndi.JNDIInvoker;
 import org.apache.geode.internal.jta.TransactionManagerImpl;
@@ -5543,16 +5545,17 @@ public class GemFireCacheImpl
 
 
   private Server gRPCServer;
-  private static final int GRPC_SERVER_PORT = Integer.getInteger("grpc.server.port", 0);
+  private static final int GRPC_SERVER_PORT = Integer.getInteger("grpc.server.port", 9050);
 
-  private void startgRPCServer(GemFireCacheImpl gemFireCache) {
+  private void startgRPCServer(GemFireCacheImpl geodeCache) {
+    logger.info("GemfireCacheImpl::startgRPCServer::GRPC_SERVER_PORT -> " + GRPC_SERVER_PORT);
+
     if (this.isServerNode() && GRPC_SERVER_PORT != 0) {
       try {
-        gRPCServer = NettyServerBuilder.forPort(GRPC_SERVER_PORT)
-            .addService(new MTableServiceImpl(cache))
-            .executor(com.google.common.util.concurrent.MoreExecutors.directExecutor())
-            .build()
-            .start();
+        this.gRPCServer =
+            ServerBuilder.forPort(GRPC_SERVER_PORT).addService(new RegionServiceImpl(geodeCache))
+                .executor(com.google.common.util.concurrent.MoreExecutors.directExecutor()).build()
+                .start();
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -5572,10 +5575,10 @@ public class GemFireCacheImpl
   }
 
   private void stopGRPCServer() {
-    if (gRPCServer != null) {
-      gRPCServer.shutdown();
+    if (this.gRPCServer != null) {
+      this.gRPCServer.shutdown();
       try {
-        gRPCServer.awaitTermination(5, TimeUnit.SECONDS);
+        this.gRPCServer.awaitTermination(5, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
