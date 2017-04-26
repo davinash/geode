@@ -5565,10 +5565,9 @@ public class GemFireCacheImpl
         @Override
         public void run() {
           // Use stderr here since the logger may have been reset by its JVM shutdown hook.
-          System.err.println("*** shutting down gRPC server since JVM is shutting down");
+          logger.info("*** shutting down gRPC server since JVM is shutting down");
           GemFireCacheImpl.this.stopGRPCServer();
-
-          System.err.println("*** server shut down");
+          logger.info("*** server shut down");
         }
       });
     }

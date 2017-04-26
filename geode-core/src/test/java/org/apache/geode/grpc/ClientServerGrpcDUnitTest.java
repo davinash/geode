@@ -14,66 +14,124 @@
  */
 package org.apache.geode.grpc;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import org.apache.geode.cache.Cache;
+import org.apache.geode.cache.CacheClosedException;
+import org.apache.geode.cache.CacheFactory;
+import org.apache.geode.cache.RegionShortcut;
+import org.apache.geode.cache.client.ClientCache;
+import org.apache.geode.cache.client.ClientCacheFactory;
+import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.apache.geode.cache.server.CacheServer;
-import org.apache.geode.distributed.DistributedSystem;
-import org.apache.geode.internal.AvailablePort;
-import org.apache.geode.internal.logging.LogService;
+import org.apache.geode.distributed.internal.DistributionConfig;
+import org.apache.geode.generated.RegionService.RegionServiceGrpc;
+import org.apache.geode.internal.AvailablePortHelper;
+import org.apache.geode.test.dunit.DistributedTestUtils;
 import org.apache.geode.test.dunit.Host;
+import org.apache.geode.test.dunit.SerializableCallable;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
+import org.apache.geode.test.dunit.standalone.DUnitLauncher;
 import org.apache.geode.test.junit.categories.ClientServerTest;
-import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 
 @Category(ClientServerTest.class)
 public class ClientServerGrpcDUnitTest extends JUnit4CacheTestCase {
-  private static final Logger logger = LogService.getLogger();
-  private static Host host;
-  private static VM server1;
+  private Host host = null;
+  private VM vm0 = null;
+  private VM vm1 = null;
+  private final String REGION_NAME = "TestGrpcPRRegion";
 
   @Override
-  public final void postSetUp() throws Exception {
-    host = Host.getHost(0);
-    server1 = host.getVM(2);
+  public void preSetUp() throws Exception {
+    disconnectAllFromDS();
+    super.preSetUp();
   }
 
-  private int initServerCache() {
-    Object[] args = new Object[]{};
-    return ((Integer) server1.invoke(ClientServerGrpcDUnitTest.class, "createServerCache", args))
-        .intValue();
+  @Override
+  public void postSetUp() throws Exception {
+    Host host = Host.getHost(0);
+    vm0 = host.getVM(0);
+    vm1 = host.getVM(1);
   }
 
-  private static Integer createServerCache()
-      throws Exception {
-    System.setProperty("grpc.server.port", "9050");
-    Cache cache = new ClientServerGrpcDUnitTest().createCacheV(new Properties());
-    CacheServer server = cache.addCacheServer();
-    int port = AvailablePort.getRandomAvailablePort(AvailablePort.SOCKET);
-    server.setPort(port);
-    server.start();
-    logger.info("Started server on port " + server.getPort());
-    return new Integer(server.getPort());
-
+  private Object startServerOn(VM vm, final String locators) {
+    return vm.invoke(new SerializableCallable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        Properties props = new Properties();
+        props.setProperty(DistributionConfig.LOG_LEVEL_NAME, "info");
+        props.setProperty(DistributionConfig.LOG_FILE_NAME, "system.log");
+        props.setProperty(DistributionConfig.MCAST_PORT_NAME, String.valueOf(0));
+        props.setProperty(DistributionConfig.LOCATORS_NAME, locators);
+        Cache c = null;
+        try {
+          c = CacheFactory.getAnyInstance();
+          c.close();
+        } catch (CacheClosedException cce) {
+        }
+        c = CacheFactory.create(getSystem(props));
+        CacheServer s = c.addCacheServer();
+        int port = AvailablePortHelper.getRandomAvailableTCPPort();
+        s.setPort(port);
+        s.start();
+        return port;
+      }
+    });
   }
 
-  private Cache createCacheV(Properties props) throws Exception {
-    DistributedSystem ds = getSystem(props);
-    assertNotNull(ds);
-    ds.disconnect();
-    ds = getSystem(props);
-    Cache cache = getCache();
-    assertNotNull(cache);
-    return cache;
+  private int getDUnitLocatorPort() {
+    return DistributedTestUtils.getDUnitLocatorPort();
+  }
+
+  private int getLocatorPort() {
+    if (DUnitLauncher.isLaunched()) {
+      String locatorString = DUnitLauncher.getLocatorString();
+      int index = locatorString.indexOf("[");
+      return Integer.parseInt(locatorString.substring(index + 1, locatorString.length() - 1));
+    } else {
+      return getDUnitLocatorPort();
+    }
+  }
+
+  private void createClientCache() {
+    ClientCacheFactory ccf = new ClientCacheFactory();
+    ccf = ccf.addPoolLocator("127.0.0.1", getLocatorPort());
+    ccf.create();
+  }
+
+  private void createRegionOn(VM vm) {
+    vm.invoke(() -> {
+      Cache cache = CacheFactory.getAnyInstance();
+      cache.createRegionFactory(RegionShortcut.PARTITION).create(REGION_NAME);
+    });
   }
 
   @Test
-  public void testGRPCOps() throws Exception {
-    createServerCache();
+  public void testGRPCOps() throws InterruptedException {
+    startServerOn(this.vm0, DUnitLauncher.getLocatorString());
+    createClientCache();
+
+    createRegionOn(this.vm0);
+
+    ClientCache clientCache = ClientCacheFactory.getAnyInstance();
+    clientCache.createClientRegionFactory(ClientRegionShortcut.PROXY).create(REGION_NAME);
+
+    RegionServiceGrpc.RegionServiceBlockingStub blockingStub;
+    ManagedChannel channel =
+        ManagedChannelBuilder.forAddress("127.0.0.1", 9050).usePlaintext(true).build();
+    blockingStub = RegionServiceGrpc.newBlockingStub(channel);
+
+    channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+
+
+    clientCache.getRegion(REGION_NAME).destroyRegion();
   }
 }
