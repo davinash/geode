@@ -14,8 +14,10 @@
  */
 package org.apache.geode.grpc;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.CacheClosedException;
 import org.apache.geode.cache.CacheFactory;
@@ -25,8 +27,12 @@ import org.apache.geode.cache.client.ClientCacheFactory;
 import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.apache.geode.cache.server.CacheServer;
 import org.apache.geode.distributed.internal.DistributionConfig;
+import org.apache.geode.generated.RegionService.PutReply;
+import org.apache.geode.generated.RegionService.PutRequest;
 import org.apache.geode.generated.RegionService.RegionServiceGrpc;
 import org.apache.geode.internal.AvailablePortHelper;
+import org.apache.geode.internal.cache.partitioned.PutMessage;
+import org.apache.geode.internal.logging.LogService;
 import org.apache.geode.test.dunit.DistributedTestUtils;
 import org.apache.geode.test.dunit.Host;
 import org.apache.geode.test.dunit.SerializableCallable;
@@ -34,6 +40,7 @@ import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
 import org.apache.geode.test.dunit.standalone.DUnitLauncher;
 import org.apache.geode.test.junit.categories.ClientServerTest;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -41,9 +48,11 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @Category(ClientServerTest.class)
 public class ClientServerGrpcDUnitTest extends JUnit4CacheTestCase {
+  private static final Logger logger = LogService.getLogger();
   private Host host = null;
   private VM vm0 = null;
   private VM vm1 = null;
@@ -128,6 +137,23 @@ public class ClientServerGrpcDUnitTest extends JUnit4CacheTestCase {
     ManagedChannel channel =
         ManagedChannelBuilder.forAddress("127.0.0.1", 9050).usePlaintext(true).build();
     blockingStub = RegionServiceGrpc.newBlockingStub(channel);
+
+    // Perform Sample PUT Operation using gRPC Client
+    for (int i = 0; i < 10; i++) {
+      ByteString key = ByteString.copyFrom(("Key-" + i).getBytes());
+      ByteString val = ByteString.copyFrom(("Val-" + i).getBytes());
+
+      PutReply putReply;
+      try {
+        putReply = blockingStub.put(PutRequest.newBuilder().setKey(key).setValue(val)
+            .setRegionName(REGION_NAME).build());
+
+        assertTrue(putReply.getIsSuccess());
+      } catch (StatusRuntimeException e) {
+        logger.warn("RPC failed: {0}", e.getStatus());
+        return;
+      }
+    }
 
     channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
 

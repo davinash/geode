@@ -15,17 +15,40 @@
 
 package org.apache.geode.internal.grpc;
 
+import io.grpc.stub.StreamObserver;
+import org.apache.geode.GemFireException;
+import org.apache.geode.cache.Region;
+import org.apache.geode.generated.RegionService.PutReply;
+import org.apache.geode.generated.RegionService.PutRequest;
 import org.apache.geode.generated.RegionService.RegionServiceGrpc;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
+import org.apache.geode.internal.logging.LogService;
+import org.apache.logging.log4j.Logger;
 
-/**
- * Created by adongre on 26/4/17.
- */
 public class RegionServiceImpl extends RegionServiceGrpc.RegionServiceImplBase {
+  private static final Logger logger = LogService.getLogger();
   private final GemFireCacheImpl cache;
 
   public RegionServiceImpl(GemFireCacheImpl gemFireCache) {
-
     cache = gemFireCache;
+  }
+
+  @Override
+  public void put(PutRequest request, StreamObserver<PutReply> responseObserver) {
+    Region region = cache.getRegion(request.getRegionName());
+    PutReply.Builder replyBuilder = PutReply.newBuilder();
+    if (region == null) {
+      replyBuilder.setIsSuccess(false);
+    } else {
+      try {
+        region.put(request.getKey(), request.getValue());
+        replyBuilder.setIsSuccess(true);
+      } catch (GemFireException e) {
+        logger.error("RegionServiceImpl::put", e);
+        replyBuilder.setIsSuccess(false);
+      }
+    }
+    responseObserver.onNext(replyBuilder.build());
+    responseObserver.onCompleted();
   }
 }

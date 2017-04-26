@@ -13,15 +13,15 @@ option java_package = "org.apache.geode.generated.RegionService";
 option objc_class_prefix = "Geode";
 
 service RegionService {
-    rpc put(putRequest) returns (putReply) {}
+    rpc put(PutRequest) returns (PutReply) {}
 }
 
-message putRequest {
+message PutRequest {
     string regionName = 1;
     bytes key = 2;
     bytes value = 3;
 }
 
-message putReply {
-    bytes oldValue = 1;
+message PutReply {
+    bool isSuccess = 1;
 }
