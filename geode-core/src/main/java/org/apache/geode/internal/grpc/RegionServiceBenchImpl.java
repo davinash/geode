@@ -17,7 +17,6 @@ package org.apache.geode.internal.grpc;
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import org.apache.geode.GemFireException;
-import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.cache.Region;
 import org.apache.geode.generated.RegionServiceBenchMark.*;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
@@ -28,7 +27,6 @@ import org.apache.geode.pdx.PdxInstanceFactory;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by adongre on 26/4/17.
@@ -82,7 +80,7 @@ public class RegionServiceBenchImpl
           for (String fieldName : val.getFieldNames()) {
             byte[] v = (byte[]) val.getField(fieldName);
 
-            replyBuilder.setMapFields(index++,
+            replyBuilder.addMapFields(index++,
                 MapKeyValueEntry.newBuilder().setKey(fieldName).setValue(ByteString.copyFrom(v)));
           }
           replyBuilder.setIsSuccess(true);
