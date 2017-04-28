@@ -19,7 +19,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import org.apache.geode.GemFireException;
 import org.apache.geode.cache.Region;
-import org.apache.geode.generated.RegionService.*;
+import org.apache.geode.protobuf.generated.*;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.logging.LogService;
 import org.apache.logging.log4j.Logger;

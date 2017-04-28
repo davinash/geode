@@ -24,14 +24,13 @@ import org.apache.geode.cache.client.ClientCacheFactory;
 import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.apache.geode.cache.server.CacheServer;
 import org.apache.geode.distributed.internal.DistributionConfig;
-import org.apache.geode.generated.RegionService.*;
-import org.apache.geode.generated.RegionServiceBenchMark.*;
 import org.apache.geode.internal.AvailablePortHelper;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.logging.LogService;
 import org.apache.geode.pdx.JSONFormatter;
 import org.apache.geode.pdx.PdxInstance;
 import org.apache.geode.pdx.PdxInstanceFactory;
+import org.apache.geode.protobuf.generated.*;
 import org.apache.geode.test.dunit.DistributedTestUtils;
 import org.apache.geode.test.dunit.Host;
 import org.apache.geode.test.dunit.SerializableCallable;
@@ -44,6 +43,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -87,7 +87,7 @@ public class ClientServerGrpcDUnitTest extends JUnit4CacheTestCase {
         } catch (CacheClosedException cce) {
         }
         c = CacheFactory.create(getSystem(props));
-        ((GemFireCacheImpl)c).getCacheConfig().setPdxReadSerialized(true);
+        ((GemFireCacheImpl) c).getCacheConfig().setPdxReadSerialized(true);
         CacheServer s = c.addCacheServer();
         int port = AvailablePortHelper.getRandomAvailableTCPPort();
         s.setPort(port);
@@ -204,20 +204,16 @@ public class ClientServerGrpcDUnitTest extends JUnit4CacheTestCase {
 
     // Perform Sample PUT Operation using gRPC Client
     for (int i = 0; i < 10; i++) {
-      ByteString key = ByteString.copyFrom(("Key-" + i).getBytes());
-
       PutMapRequest.Builder requestBuilder = PutMapRequest.newBuilder();
-
-      for ( int j = 0; j < 5; j++) {
-        MapKeyValueEntry.Builder mapKVBuilder = MapKeyValueEntry.newBuilder();
-        mapKVBuilder.setKey("MapKey-" + j)
-            .setValue(ByteString.copyFrom(("MapValue-" + j).getBytes())).build();
-        requestBuilder.addMapFields(mapKVBuilder.build());
+      for (int j = 0; j < 5; j++) {
+        requestBuilder.putMapFields("MapKey-" + j,
+            ByteString.copyFrom(("MapValue-" + j).getBytes()));
       }
 
       PutMapReply putMapReply;
       try {
-        putMapReply = blockingStub.putMap(requestBuilder.setKey(key).setRegionName(REGION_NAME).build());
+        putMapReply = blockingStub
+            .putMap(requestBuilder.setKey(("Key-" + i)).setRegionName(REGION_NAME).build());
         assertTrue(putMapReply.getIsSuccess());
       } catch (StatusRuntimeException e) {
         logger.warn("RPC failed: {0}", e.getStatus());
@@ -229,38 +225,32 @@ public class ClientServerGrpcDUnitTest extends JUnit4CacheTestCase {
       Cache cache = CacheFactory.getAnyInstance();
       Region r = cache.getRegion(REGION_NAME);
       for (int i = 0; i < 10; i++) {
-        ByteString key = ByteString.copyFrom(("Key-" + i).getBytes());
         PdxInstanceFactory pdxInstanceFactory =
             cache.createPdxInstanceFactory(JSONFormatter.JSON_CLASSNAME);
-        for ( int j = 0; j < 5; j++) {
+        for (int j = 0; j < 5; j++) {
           pdxInstanceFactory.writeByteArray("MapKey-" + j,
               ByteString.copyFrom(("MapValue-" + j).getBytes()).toByteArray());
         }
         PdxInstance expectedValue = pdxInstanceFactory.create();
-        Assert.assertEquals(expectedValue, r.get(key));
+        Assert.assertEquals(expectedValue, r.get("Key-" + i));
       }
     });
 
     for (int i = 0; i < 10; i++) {
-      ByteString key = ByteString.copyFrom(("Key-" + i).getBytes());
-      //ByteString expectedVal = ByteString.copyFrom(("Val-" + i).getBytes());
+      // ByteString expectedVal = ByteString.copyFrom(("Val-" + i).getBytes());
       GetMapReply getMapReply;
       try {
-        getMapReply = blockingStub
-            .getMap(GetMapRequest.newBuilder().setKey(key).setRegionName(REGION_NAME).build());
+        getMapReply = blockingStub.getMap(
+            GetMapRequest.newBuilder().setKey("Key-" + i).setRegionName(REGION_NAME).build());
         assertTrue(getMapReply.getIsSuccess());
         assertEquals(5, getMapReply.getMapFieldsCount());
 
+        Map<String, ByteString> mapFieldsMap = getMapReply.getMapFieldsMap();
 
-        PutMapRequest.Builder requestBuilder = PutMapRequest.newBuilder();
-        for ( int j = 0; j < 5; j++) {
-          MapKeyValueEntry.Builder mapKVBuilder = MapKeyValueEntry.newBuilder();
-          mapKVBuilder.setKey("MapKey-" + j)
-              .setValue(ByteString.copyFrom(("MapValue-" + j).getBytes()));
-          requestBuilder.addMapFields(mapKVBuilder.build());
+        for (int j = 0; j < 5; j++) {
+          ByteString actualValue = mapFieldsMap.get("MapKey-" + j);
+          assertEquals(ByteString.copyFrom(("MapValue-" + j).getBytes()), actualValue);
         }
-        Assert.assertEquals(requestBuilder.getMapFieldsList(), getMapReply.getMapFieldsList());
-
       } catch (StatusRuntimeException e) {
         logger.warn("RPC failed: {0}", e.getStatus());
         return;

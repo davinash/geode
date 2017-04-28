@@ -18,7 +18,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import org.apache.geode.GemFireException;
 import org.apache.geode.cache.Region;
-import org.apache.geode.generated.RegionServiceBenchMark.*;
+import org.apache.geode.protobuf.generated.*;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.logging.LogService;
 import org.apache.geode.pdx.JSONFormatter;
@@ -27,6 +27,7 @@ import org.apache.geode.pdx.PdxInstanceFactory;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by adongre on 26/4/17.
@@ -40,13 +41,6 @@ public class RegionServiceBenchImpl
     this.cache = cache;
   }
 
-  private PdxInstance convertToBytearrayMap(List<MapKeyValueEntry> values) {
-    PdxInstanceFactory pdxInstanceFactory =
-        cache.createPdxInstanceFactory(JSONFormatter.JSON_CLASSNAME);
-    values.forEach(E -> pdxInstanceFactory.writeByteArray(E.getKey(), E.getValue().toByteArray()));
-    return pdxInstanceFactory.create();
-  }
-
   @Override
   public void putMap(PutMapRequest request, StreamObserver<PutMapReply> responseObserver) {
     Region region = cache.getRegion(request.getRegionName());
@@ -55,7 +49,15 @@ public class RegionServiceBenchImpl
       replyBuilder.setIsSuccess(false);
     } else {
       try {
-        region.put(request.getKey(), convertToBytearrayMap(request.getMapFieldsList()));
+        PdxInstanceFactory pdxInstanceFactory =
+            cache.createPdxInstanceFactory(JSONFormatter.JSON_CLASSNAME);
+        Map<String, ByteString> mapFieldsMap = request.getMapFieldsMap();
+
+        mapFieldsMap.forEach((F, V) -> {
+          pdxInstanceFactory.writeByteArray(F, V.toByteArray());
+        });
+        region.put(request.getKey(), pdxInstanceFactory.create());
+
         replyBuilder.setIsSuccess(true);
       } catch (GemFireException e) {
         logger.error("RegionServiceImpl::put", e);
@@ -76,12 +78,9 @@ public class RegionServiceBenchImpl
       try {
         PdxInstance val = (PdxInstance) region.get(request.getKey());
         if (val != null) {
-          int index = 0;
           for (String fieldName : val.getFieldNames()) {
             byte[] v = (byte[]) val.getField(fieldName);
-
-            replyBuilder.addMapFields(index++,
-                MapKeyValueEntry.newBuilder().setKey(fieldName).setValue(ByteString.copyFrom(v)));
+            replyBuilder.putMapFields(fieldName, ByteString.copyFrom(v));
           }
           replyBuilder.setIsSuccess(true);
         } else {
