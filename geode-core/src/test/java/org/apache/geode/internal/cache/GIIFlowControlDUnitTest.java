@@ -395,8 +395,8 @@ public class GIIFlowControlDUnitTest extends JUnit4CacheTestCase {
   private SerializableRunnable getCreateRegionRunnable() {
     SerializableRunnable createRegion = new SerializableRunnable("Create non persistent region") {
       public void run() {
-        getCache();
-        RegionFactory rf = new RegionFactory();
+        Cache cache = getCache();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setDataPolicy(DataPolicy.REPLICATE);
         rf.setScope(Scope.DISTRIBUTED_ACK);
         rf.create(REGION_NAME);

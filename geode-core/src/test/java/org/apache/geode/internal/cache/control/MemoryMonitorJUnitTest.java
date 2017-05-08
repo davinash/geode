@@ -317,7 +317,8 @@ public class MemoryMonitorJUnitTest {
   public void testPutsPartitionedRegion() throws Exception {
     PartitionAttributes pa =
         new PartitionAttributesFactory().setRedundantCopies(0).setTotalNumBuckets(3).create();
-    Region region = new RegionFactory().setPartitionAttributes(pa).create("parReg");
+    Region region = new CacheFactory().create().createRegionFactory().setPartitionAttributes(pa)
+        .create("parReg");
     checkOpRejection(region, false, true);
     region.close();
     assertEquals(0 + SYSTEM_LISTENERS, cache.getInternalResourceManager(false)

@@ -65,7 +65,8 @@ public class PRDataStoreMemoryJUnitTest {
   }
 
   protected RegionFactory<?, ?> defineRegionFactory() {
-    return new RegionFactory().setPartitionAttributes(definePartitionAttributes());
+    return new CacheFactory().create().createRegionFactory()
+        .setPartitionAttributes(definePartitionAttributes());
   }
 
   @Test

@@ -145,7 +145,7 @@ public class BackupJUnitTest {
     backupAndRecover(new RegionCreator() {
       public Region createRegion() {
         DiskStoreImpl ds = createDiskStore();
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = new CacheFactory().create().createRegionFactory();
         rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);
         rf.setDiskDirs(diskDirs);
         DiskWriteAttributesFactory daf = new DiskWriteAttributesFactory();
@@ -417,7 +417,7 @@ public class BackupJUnitTest {
   }
 
   protected Region createRegion() {
-    RegionFactory rf = new RegionFactory();
+    RegionFactory rf = new CacheFactory().create().createRegionFactory();
     rf.setDiskStoreName("diskStore");
     rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);
     Region region = rf.create("region");
@@ -425,7 +425,7 @@ public class BackupJUnitTest {
   }
 
   private Region createOverflowRegion() {
-    RegionFactory rf = new RegionFactory();
+    RegionFactory rf = new CacheFactory().create().createRegionFactory();
     rf.setDiskStoreName("diskStore");
     rf.setEvictionAttributes(
         EvictionAttributes.createLIFOEntryAttributes(1, EvictionAction.OVERFLOW_TO_DISK));

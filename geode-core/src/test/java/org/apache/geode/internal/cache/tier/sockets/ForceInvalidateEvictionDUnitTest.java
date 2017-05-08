@@ -200,7 +200,7 @@ public class ForceInvalidateEvictionDUnitTest extends JUnit4CacheTestCase {
 
       public void run() {
         Cache cache = getCache();
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setOffHeap(isOffHeapEnabled());
         rf.setDataPolicy(DataPolicy.PARTITION);
 
@@ -221,7 +221,7 @@ public class ForceInvalidateEvictionDUnitTest extends JUnit4CacheTestCase {
 
       public void run() {
         Cache cache = getCache();
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setOffHeap(isOffHeapEnabled());
         rf.setDataPolicy(DataPolicy.PARTITION);
 
@@ -361,7 +361,7 @@ public class ForceInvalidateEvictionDUnitTest extends JUnit4CacheTestCase {
         pf.addServer(NetworkUtils.getServerHostName(host), port);
         pf.setSubscriptionEnabled(true);
         pf.create(name);
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setOffHeap(isOffHeapEnabled());
         rf.setScope(Scope.LOCAL);
         rf.setPoolName(name);

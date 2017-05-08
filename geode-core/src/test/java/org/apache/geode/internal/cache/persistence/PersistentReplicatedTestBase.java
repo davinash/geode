@@ -106,7 +106,7 @@ public abstract class PersistentReplicatedTestBase extends JUnit4CacheTestCase {
         dsf.setAllowForceCompaction(true);
         dsf.setCompactionThreshold(20);
         DiskStore ds = dsf.create(REGION_NAME);
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setDiskStoreName(ds.getName());
         rf.setDiskSynchronous(true);
         rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);
@@ -154,7 +154,7 @@ public abstract class PersistentReplicatedTestBase extends JUnit4CacheTestCase {
     SerializableRunnable createRegion = new SerializableRunnable("Create non persistent region") {
       public void run() {
         Cache cache = getCache();
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setDataPolicy(DataPolicy.REPLICATE);
         rf.setScope(Scope.DISTRIBUTED_ACK);
         rf.create(REGION_NAME);
@@ -197,7 +197,7 @@ public abstract class PersistentReplicatedTestBase extends JUnit4CacheTestCase {
         dsf.setDiskDirs(new File[] {dir});
         dsf.setMaxOplogSize(1);
         DiskStore ds = dsf.create(REGION_NAME);
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setDiskStoreName(ds.getName());
         rf.setDiskSynchronous(true);
         rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);

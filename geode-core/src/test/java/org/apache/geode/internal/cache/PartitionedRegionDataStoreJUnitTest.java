@@ -176,10 +176,11 @@ public class PartitionedRegionDataStoreJUnitTest {
     int key = 0;
     final int numMBytes = 5;
 
-    final PartitionedRegion regionAck = (PartitionedRegion) new RegionFactory()
-        .setPartitionAttributes(new PartitionAttributesFactory().setRedundantCopies(0)
-            .setLocalMaxMemory(numMBytes).create())
-        .create(this.regionName);
+    final PartitionedRegion regionAck =
+        (PartitionedRegion) new CacheFactory().create()
+            .createRegionFactory().setPartitionAttributes(new PartitionAttributesFactory()
+                .setRedundantCopies(0).setLocalMaxMemory(numMBytes).create())
+            .create(this.regionName);
 
     assertTrue(regionAck.getDataStore().canAccommodateMoreBytesSafely(0));
 

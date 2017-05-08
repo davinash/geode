@@ -1339,7 +1339,7 @@ public class PartitionedRegionAPIDUnitTest extends PartitionedRegionDUnitTestCas
     final String arg = "loaderArg";
     CacheSerializableRunnable createLoaderPR = new CacheSerializableRunnable("createLoaderPR") {
       public void run2() throws CacheException {
-        getCache();
+        Cache cache = getCache();
 
         CacheLoader cl = new TestCacheLoader() {
           public Object load2(LoaderHelper helper) throws CacheLoaderException {
@@ -1352,7 +1352,7 @@ public class PartitionedRegionAPIDUnitTest extends PartitionedRegionDUnitTestCas
         };
 
         PartitionedRegion pr =
-            (PartitionedRegion) new RegionFactory()
+            (PartitionedRegion) cache.createRegionFactory()
                 .setCacheLoader(cl).setPartitionAttributes(new PartitionAttributesFactory()
                     .setRedundantCopies(1).setLocalMaxMemory(localMaxMemory).create())
                 .create(rName);
@@ -1363,8 +1363,8 @@ public class PartitionedRegionAPIDUnitTest extends PartitionedRegionDUnitTestCas
     vm3.invoke(createLoaderPR);
 
     // create a "pure" accessor, no data storage
-    getCache();
-    Region pr = new RegionFactory()
+    Cache cache = getCache();
+    Region pr = cache.createRegionFactory()
         .setPartitionAttributes(
             new PartitionAttributesFactory().setRedundantCopies(1).setLocalMaxMemory(0).create())
         .create(rName);

@@ -1455,7 +1455,7 @@ public class PersistentPartitionedRegionDUnitTest extends PersistentPartitionedR
   @Test
   public void testOverflowCacheClose() {
     Cache cache = getCache();
-    RegionFactory rf = new RegionFactory();
+    RegionFactory rf = cache.createRegionFactory();
     PartitionAttributesFactory paf = new PartitionAttributesFactory();
     rf.setPartitionAttributes(paf.create());
     rf.setDataPolicy(DataPolicy.PARTITION);

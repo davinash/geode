@@ -42,6 +42,7 @@ import org.apache.geode.admin.AlertListener;
 import org.apache.geode.admin.DistributedSystemConfig;
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.CacheListener;
+import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.cache.DataPolicy;
 import org.apache.geode.cache.EntryEvent;
 import org.apache.geode.cache.Region;
@@ -246,15 +247,16 @@ public class DistributionManagerDUnitTest extends JUnit4DistributedTestCase {
       props.setProperty(NAME, "putter");
 
       getSystem(props);
-      Region rgn = (new RegionFactory()).setScope(Scope.DISTRIBUTED_ACK).setEarlyAck(false)
-          .setDataPolicy(DataPolicy.REPLICATE).create("testRegion");
+      Region rgn =
+          (new CacheFactory().create().createRegionFactory()).setScope(Scope.DISTRIBUTED_ACK)
+              .setEarlyAck(false).setDataPolicy(DataPolicy.REPLICATE).create("testRegion");
 
       vm1.invoke(new SerializableRunnable("Connect to distributed system") {
         public void run() {
           props.setProperty(NAME, "sleeper");
           getSystem(props);
           IgnoredException.addIgnoredException("elapsed while waiting for replies");
-          RegionFactory rf = new RegionFactory();
+          RegionFactory rf = new CacheFactory().create().createRegionFactory();
           Region r = rf.setScope(Scope.DISTRIBUTED_ACK).setDataPolicy(DataPolicy.REPLICATE)
               .setEarlyAck(false).addCacheListener(getSleepingListener(false)).create("testRegion");
           myCache = r.getCache();
@@ -381,8 +383,8 @@ public class DistributionManagerDUnitTest extends JUnit4DistributedTestCase {
       props.setProperty(NAME, "putter");
 
       getSystem(props);
-      Region rgn = (new RegionFactory()).setScope(Scope.DISTRIBUTED_ACK)
-          .setDataPolicy(DataPolicy.REPLICATE).create("testRegion");
+      Region rgn = (new CacheFactory().create().createRegionFactory())
+          .setScope(Scope.DISTRIBUTED_ACK).setDataPolicy(DataPolicy.REPLICATE).create("testRegion");
       basicGetSystem().getLogWriter().info(
           "<ExpectedException action=add>sec have elapsed while waiting for replies</ExpectedException>");
 
@@ -394,7 +396,7 @@ public class DistributionManagerDUnitTest extends JUnit4DistributedTestCase {
           log.info("<ExpectedException action=add>service failure</ExpectedException>");
           log.info(
               "<ExpectedException action=add>org.apache.geode.ForcedDisconnectException</ExpectedException>");
-          RegionFactory rf = new RegionFactory();
+          RegionFactory rf = new CacheFactory().create().createRegionFactory();
           Region r = rf.setScope(Scope.DISTRIBUTED_ACK).setDataPolicy(DataPolicy.REPLICATE)
               .addCacheListener(getSleepingListener(true)).create("testRegion");
           myCache = r.getCache();

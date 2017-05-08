@@ -54,7 +54,7 @@ public class PersistentRecoveryOrderOldConfigDUnitTest extends PersistentRecover
         Cache cache = getCache();
         File dir = getDiskDirForVM(vm);
         dir.mkdirs();
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         // rf.setDiskSynchronous(true);
         rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);
         rf.setScope(Scope.DISTRIBUTED_ACK);

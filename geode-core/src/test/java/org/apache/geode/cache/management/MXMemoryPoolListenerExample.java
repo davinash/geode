@@ -151,7 +151,7 @@ public class MXMemoryPoolListenerExample implements NotificationListener {
     public MemoryHog(String n, Cache c, AtomicBoolean critical) {
       this.name = n;
       this.cache = c;
-      this.tenuredData = new RegionFactory().setScope(Scope.LOCAL).create(this.name);
+      this.tenuredData = this.cache.createRegionFactory().setScope(Scope.LOCAL).create(this.name);
       this.criticalState = critical;
     }
 

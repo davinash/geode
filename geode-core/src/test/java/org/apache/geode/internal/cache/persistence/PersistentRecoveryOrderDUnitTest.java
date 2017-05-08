@@ -809,7 +809,7 @@ public class PersistentRecoveryOrderDUnitTest extends PersistentReplicatedTestBa
         dsf.setDiskDirs(new File[] {dir});
         dsf.setMaxOplogSize(1);
         DiskStore ds = dsf.create(REGION_NAME);
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setDiskStoreName(ds.getName());
         rf.setDiskSynchronous(diskSynchronous);
         rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);

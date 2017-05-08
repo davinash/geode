@@ -99,7 +99,7 @@ public class PersistentRVVRecoveryDUnitTest extends PersistentReplicatedTestBase
   @Test
   public void testNoConcurrencyChecks() {
     Cache cache = getCache();
-    RegionFactory rf = new RegionFactory();
+    RegionFactory rf = cache.createRegionFactory();
     rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);
     rf.setConcurrencyChecksEnabled(false);
     try {
@@ -453,7 +453,7 @@ public class PersistentRVVRecoveryDUnitTest extends PersistentReplicatedTestBase
     // is the amount of live data in the oplog
     dsf.setCompactionThreshold(40);
     DiskStore ds = dsf.create(REGION_NAME);
-    RegionFactory rf = new RegionFactory();
+    RegionFactory rf = cache.createRegionFactory();
     rf.setDiskStoreName(ds.getName());
     rf.setDiskSynchronous(true);
     rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);
@@ -683,7 +683,7 @@ public class PersistentRVVRecoveryDUnitTest extends PersistentReplicatedTestBase
         dsf.setQueueSize(100);
         dsf.setTimeInterval(1000);
         DiskStore ds = dsf.create(REGION_NAME);
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setDiskStoreName(ds.getName());
         rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);
         rf.setScope(Scope.DISTRIBUTED_ACK);
@@ -892,7 +892,7 @@ public class PersistentRVVRecoveryDUnitTest extends PersistentReplicatedTestBase
     dsf.setQueueSize(1000);
     dsf.setTimeInterval(1000);
     DiskStore ds = dsf.create(REGION_NAME);
-    RegionFactory rf = new RegionFactory();
+    RegionFactory rf = cache.createRegionFactory();
     rf.setDiskStoreName(ds.getName());
     rf.setDataPolicy(DataPolicy.PERSISTENT_REPLICATE);
     rf.setScope(Scope.DISTRIBUTED_ACK);

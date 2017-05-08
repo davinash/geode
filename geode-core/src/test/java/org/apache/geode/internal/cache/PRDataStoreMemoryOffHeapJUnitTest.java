@@ -15,6 +15,7 @@
 package org.apache.geode.internal.cache;
 
 import org.apache.geode.cache.RegionFactory;
+import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.test.junit.categories.IntegrationTest;
 import org.junit.experimental.categories.Category;
 
@@ -40,6 +41,7 @@ public class PRDataStoreMemoryOffHeapJUnitTest extends PRDataStoreMemoryJUnitTes
   @SuppressWarnings({"rawtypes", "deprecation"})
   @Override
   protected RegionFactory<?, ?> defineRegionFactory() {
-    return new RegionFactory().setPartitionAttributes(definePartitionAttributes()).setOffHeap(true);
+    return new CacheFactory().create().createRegionFactory()
+        .setPartitionAttributes(definePartitionAttributes()).setOffHeap(true);
   }
 }

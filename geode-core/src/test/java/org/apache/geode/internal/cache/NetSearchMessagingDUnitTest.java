@@ -380,7 +380,7 @@ public class NetSearchMessagingDUnitTest extends JUnit4CacheTestCase {
 
       public void run() {
         Cache cache = getCache();
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setScope(Scope.DISTRIBUTED_ACK);
         rf.setConcurrencyChecksEnabled(false);
         rf.setDataPolicy(DataPolicy.EMPTY);
@@ -395,7 +395,7 @@ public class NetSearchMessagingDUnitTest extends JUnit4CacheTestCase {
 
       public void run() {
         Cache cache = getCache();
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setScope(Scope.DISTRIBUTED_ACK);
         rf.setConcurrencyChecksEnabled(false);
         rf.setDataPolicy(DataPolicy.NORMAL);
@@ -425,7 +425,7 @@ public class NetSearchMessagingDUnitTest extends JUnit4CacheTestCase {
 
       public void run() {
         Cache cache = getCache();
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setScope(Scope.DISTRIBUTED_ACK);
         rf.setConcurrencyChecksEnabled(false);
         rf.setDataPolicy(DataPolicy.REPLICATE);

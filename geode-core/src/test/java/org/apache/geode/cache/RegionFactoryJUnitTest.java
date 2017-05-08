@@ -106,7 +106,8 @@ public class RegionFactoryJUnitTest {
   @Test
   public void testCreateDestroyCreateRegions() throws Exception {
     // Assert basic region creation when no DistributedSystem or Cache exists
-    RegionFactory factory = new RegionFactory(createGemFireProperties());
+    RegionFactory factory =
+        new CacheFactory(createGemFireProperties()).create().createRegionFactory();;
     r1 = factory.create(r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
 
@@ -155,7 +156,8 @@ public class RegionFactoryJUnitTest {
   @Test
   public void testRegionFactoryAndCacheClose() throws Exception {
     // Assert basic region creation when no DistributedSystem or Cache exists
-    RegionFactory factory = new RegionFactory(createGemFireProperties());
+    RegionFactory factory =
+        new CacheFactory(createGemFireProperties()).create().createRegionFactory();
     r1 = factory.create(r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
 
@@ -182,7 +184,7 @@ public class RegionFactoryJUnitTest {
       // passed
     }
 
-    factory = new RegionFactory(createGemFireProperties());
+    factory = new CacheFactory(createGemFireProperties()).create().createRegionFactory();
     r1 = factory.create(r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
 
@@ -198,7 +200,7 @@ public class RegionFactoryJUnitTest {
       // passed
     }
 
-    factory = new RegionFactory(createGemFireProperties());
+    factory = new CacheFactory(createGemFireProperties()).create().createRegionFactory();
     r1 = factory.create(r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
 
@@ -210,7 +212,7 @@ public class RegionFactoryJUnitTest {
     r1.destroyRegion();
     c.close();
     d.disconnect();
-    r1 = new RegionFactory(createGemFireProperties()).create(r1Name);
+    r1 = new CacheFactory(createGemFireProperties()).create().createRegionFactory().create(r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
   }
 
@@ -219,7 +221,7 @@ public class RegionFactoryJUnitTest {
     // Assert basic region creation when a Distributed system exists
     this.distSys = DistributedSystem.connect(createGemFireProperties()); // for teardown
 
-    RegionFactory factory = new RegionFactory();
+    RegionFactory factory = new CacheFactory().create().createRegionFactory();
     r1 = factory.create(r1Name);
     this.cache = r1.getCache(); // for teardown
     assertBasicRegionFunctionality(r1, r1Name);
@@ -233,7 +235,7 @@ public class RegionFactoryJUnitTest {
     failed.put(MCAST_TTL, "64");
 
     try {
-      new RegionFactory(failed);
+      new CacheFactory(failed).create().createRegionFactory();
       fail("Expected exception");
     } catch (IllegalStateException expected) {
       // passed
@@ -246,7 +248,7 @@ public class RegionFactoryJUnitTest {
     DistributedSystem ds = DistributedSystem.connect(createGemFireProperties());
     CacheFactory.create(ds);
 
-    RegionFactory factory = new RegionFactory();
+    RegionFactory factory = new CacheFactory().create().createRegionFactory();
     r1 = factory.create(r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
   }
@@ -259,7 +261,7 @@ public class RegionFactoryJUnitTest {
     this.cache = CacheFactory.create(ds);
     this.cache.close();
 
-    RegionFactory factory = new RegionFactory(gemfireProps);
+    RegionFactory factory = new CacheFactory(gemfireProps).create().createRegionFactory();
     r1 = factory.create(r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
   }
@@ -270,12 +272,13 @@ public class RegionFactoryJUnitTest {
   @Test
   public void testRegionFactoryRegionAttributes() throws Exception {
     Properties gemfireProps = createGemFireProperties();
-    r1 = new RegionFactory(gemfireProps).setScope(Scope.LOCAL).setConcurrencyLevel(1)
-        .setLoadFactor(0.8F).setKeyConstraint(String.class).setStatisticsEnabled(true)
-        .create(r1Name);
+    RegionFactory rf = new CacheFactory(createGemFireProperties()).create().createRegionFactory();
+    r1 = rf.setScope(Scope.LOCAL).setConcurrencyLevel(1).setLoadFactor(0.8F)
+        .setKeyConstraint(String.class).setStatisticsEnabled(true).create(r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
 
-    final RegionFactory factory = new RegionFactory(gemfireProps, r1.getAttributes());
+    final RegionFactory factory =
+        new CacheFactory(gemfireProps).create().createRegionFactory(r1.getAttributes());
     r2 = factory.create(r2Name);
     assertBasicRegionFunctionality(r2, r2Name);
     assertRegionAttributes(r1.getAttributes(), r2.getAttributes());
@@ -306,7 +309,8 @@ public class RegionFactoryJUnitTest {
           + " </region-attributes>\n" + "</cache>");
       f.close();
 
-      RegionFactory factory = new RegionFactory(createGemFireProperties(), getName());
+      RegionFactory factory =
+          new CacheFactory(createGemFireProperties()).create().createRegionFactory(getName());
       r1 = factory.create(this.r1Name);
       assertBasicRegionFunctionality(r1, r1Name);
       RegionAttributes ra = r1.getAttributes();
@@ -327,7 +331,8 @@ public class RegionFactoryJUnitTest {
   public void testRegionFactoryProperties() throws Exception {
     final Properties gemfireProperties = createGemFireProperties();
     gemfireProperties.put(MCAST_TTL, "64");
-    RegionFactory factory = new RegionFactory(gemfireProperties);
+    RegionFactory factory =
+        new CacheFactory(createGemFireProperties()).create().createRegionFactory();
     r1 = factory.create(this.r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
     assertEquals(gemfireProperties.get(MCAST_TTL),
@@ -371,7 +376,8 @@ public class RegionFactoryJUnitTest {
           + " </region-attributes>\n" + "</cache>");
       f.close();
 
-      RegionFactory factory = new RegionFactory(gemfireProperties, attrsId);
+      RegionFactory factory =
+          new CacheFactory(gemfireProperties).create().createRegionFactory(attrsId);
       r1 = factory.create(this.r1Name);
       assertBasicRegionFunctionality(r1, r1Name);
       assertEquals(gemfireProperties.get(MCAST_TTL),

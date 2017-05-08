@@ -658,7 +658,7 @@ public class BackupDUnitTest extends PersistentPartitionedRegionTestBase {
         dsf.setMaxOplogSize(1);
         DiskStore ds = dsf.create(getUniqueName());
 
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setDiskStoreName(ds.getName());
         rf.setDiskSynchronous(true);
         rf.setDataPolicy(getDataPolicy());
@@ -687,7 +687,7 @@ public class BackupDUnitTest extends PersistentPartitionedRegionTestBase {
         dsf.setMaxOplogSize(1);
         DiskStore ds = dsf.create(getUniqueName());
 
-        RegionFactory rf = new RegionFactory();
+        RegionFactory rf = cache.createRegionFactory();
         rf.setDiskStoreName(ds.getName());
         rf.setDiskSynchronous(true);
         rf.setDataPolicy(DataPolicy.REPLICATE);

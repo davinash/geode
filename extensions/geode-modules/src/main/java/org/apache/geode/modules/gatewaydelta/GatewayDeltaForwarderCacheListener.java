@@ -154,7 +154,8 @@ public class GatewayDeltaForwarderCacheListener extends CacheListenerAdapter<Str
   private LocalRegion createOrRetrieveGatewayDeltaRegion() {
     Region region = this.cache.getRegion(GatewayDelta.GATEWAY_DELTA_REGION_NAME);
     if (region == null) {
-      region = new RegionFactory().setScope(Scope.LOCAL).setDataPolicy(DataPolicy.EMPTY)
+      RegionFactory regionFactory = new CacheFactory().create().createRegionFactory();
+      region = regionFactory.setScope(Scope.LOCAL).setDataPolicy(DataPolicy.EMPTY)
           .setSubscriptionAttributes(new SubscriptionAttributes(InterestPolicy.ALL))
           // TODO: Disabled for WAN
           // .setEnableGateway(true)
