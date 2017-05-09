@@ -332,7 +332,7 @@ public class RegionFactoryJUnitTest {
     final Properties gemfireProperties = createGemFireProperties();
     gemfireProperties.put(MCAST_TTL, "64");
     RegionFactory factory =
-        new CacheFactory(createGemFireProperties()).create().createRegionFactory();
+        new CacheFactory(gemfireProperties).create().createRegionFactory();
     r1 = factory.create(this.r1Name);
     assertBasicRegionFunctionality(r1, r1Name);
     assertEquals(gemfireProperties.get(MCAST_TTL),
