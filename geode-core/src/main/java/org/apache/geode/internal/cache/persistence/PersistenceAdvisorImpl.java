@@ -1345,8 +1345,8 @@ public class PersistenceAdvisorImpl implements PersistenceAdvisor {
     return online;
   }
 
-  public static interface PersistenceAdvisorObserver {
-    default public void observe(String regionPath) {}
+  public interface PersistenceAdvisorObserver {
+    default void observe(String regionPath) {}
   }
 
   public static void setPersistenceAdvisorObserver(PersistenceAdvisorObserver o) {

@@ -26,5 +26,5 @@ public interface RegionService extends CacheService {
    *
    * @param region The region being destroyed
    */
-  public void beforeRegionDestroyed(Region region);
+  void beforeRegionDestroyed(Region region);
 }
