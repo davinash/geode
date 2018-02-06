@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.apache.geode.distributed.internal.membership.InternalDistributedMember;
 import org.apache.geode.internal.cache.InitialImageOperation;
+import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.LocalRegion;
 import org.apache.geode.internal.cache.RegionEntrySynchronizationListener;
 
@@ -26,10 +27,10 @@ public class GatewaySenderQueueEntrySynchronizationListener
 
   @Override
   public void afterSynchronization(InternalDistributedMember sender, LocalRegion region,
-      List<InitialImageOperation.Entry> entriesToSynchronize) {
+      List<InitialImageOperation.Entry> entriesToSynchronize, InternalCache cache) {
     if (region.getAllGatewaySenderIds().size() > 0) {
-      new GatewaySenderQueueEntrySynchronizationOperation(sender, region, entriesToSynchronize)
-          .synchronizeEntries();
+      new GatewaySenderQueueEntrySynchronizationOperation(sender, region, entriesToSynchronize,
+          cache).synchronizeEntries();
     }
   }
 }

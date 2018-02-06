@@ -21,5 +21,5 @@ import org.apache.geode.distributed.internal.membership.InternalDistributedMembe
 public interface RegionEntrySynchronizationListener {
 
   void afterSynchronization(InternalDistributedMember sender, LocalRegion region,
-      List<InitialImageOperation.Entry> entriesToSynchronize);
+      List<InitialImageOperation.Entry> entriesToSynchronize, InternalCache cache);
 }

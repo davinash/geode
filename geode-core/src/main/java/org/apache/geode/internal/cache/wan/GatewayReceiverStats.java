@@ -94,8 +94,8 @@ public class GatewayReceiverStats extends CacheServerStats {
 
   // ///////////////////// Constructors ///////////////////////
 
-  public static GatewayReceiverStats createGatewayReceiverStats(String ownerName) {
-    StatisticsFactory f = InternalDistributedSystem.getAnyInstance();
+  public static GatewayReceiverStats createGatewayReceiverStats(String ownerName,
+      InternalDistributedSystem f) {
     StatisticDescriptor[] descriptors = new StatisticDescriptor[] {
         f.createIntCounter(DUPLICATE_BATCHES_RECEIVED,
             "number of batches which have already been seen by this GatewayReceiver",

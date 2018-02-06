@@ -809,14 +809,14 @@ public abstract class AbstractGatewaySenderEventProcessor extends Thread {
               event.getRawCallbackArgument(), this.sender.getMyDSId(), allRemoteDSIds);
           event.setCallbackArgument(geCallbackArg);
           GatewaySenderEventImpl pdxSenderEvent =
-              new GatewaySenderEventImpl(EnumListenerEvent.AFTER_UPDATE, event, null); // OFFHEAP:
-                                                                                       // event for
-                                                                                       // pdx type
-                                                                                       // meta data
-                                                                                       // so it
-                                                                                       // should
-                                                                                       // never be
-                                                                                       // off-heap
+              new GatewaySenderEventImpl(EnumListenerEvent.AFTER_UPDATE, event, null, cache); // OFFHEAP:
+          // event for
+          // pdx type
+          // meta data
+          // so it
+          // should
+          // never be
+          // off-heap
           pdxEventsMap.put(typeEntry.getKey(), pdxSenderEvent);
           pdxSenderEventsList.add(pdxSenderEvent);
         }

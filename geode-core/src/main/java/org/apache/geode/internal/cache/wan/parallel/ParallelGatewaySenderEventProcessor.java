@@ -117,8 +117,8 @@ public class ParallelGatewaySenderEventProcessor extends AbstractGatewaySenderEv
 
     // while merging 42004, kept substituteValue as it is(it is barry's
     // change 42466). bucketID is merged with eventID.getBucketID
-    gatewayQueueEvent =
-        new GatewaySenderEventImpl(operation, event, substituteValue, true, eventID.getBucketID());
+    gatewayQueueEvent = new GatewaySenderEventImpl(operation, event, substituteValue, true,
+        eventID.getBucketID(), this.sender.getCache());
 
     enqueueEvent(gatewayQueueEvent);
   }

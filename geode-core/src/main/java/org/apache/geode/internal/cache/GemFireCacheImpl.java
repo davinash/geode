@@ -5255,7 +5255,7 @@ public class GemFireCacheImpl implements InternalCache, InternalClientCache, Has
       List<InitialImageOperation.Entry> entriesToSynchronize) {
     for (RegionEntrySynchronizationListener listener : this.synchronizationListeners) {
       try {
-        listener.afterSynchronization(sender, region, entriesToSynchronize);
+        listener.afterSynchronization(sender, region, entriesToSynchronize, this);
       } catch (Throwable t) {
         logger.warn(LocalizedMessage.create(
             LocalizedStrings.GemFireCacheImpl_CAUGHT_EXCEPTION_SYNCHRONIZING_EVENTS,

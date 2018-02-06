@@ -43,6 +43,7 @@ import org.apache.geode.internal.DataSerializableFixedID;
 import org.apache.geode.internal.Version;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.cache.InitialImageOperation;
+import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.LocalRegion;
 import org.apache.geode.internal.cache.versions.VersionTag;
 import org.apache.geode.internal.i18n.LocalizedStrings;
@@ -54,15 +55,18 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
   private InternalDistributedMember recipient;
 
   private LocalRegion region;
+  private InternalCache cache;
 
   private List<GatewaySenderQueueEntrySynchronizationEntry> entriesToSynchronize;
 
   private static final Logger logger = LogService.getLogger();
 
   protected GatewaySenderQueueEntrySynchronizationOperation(InternalDistributedMember recipient,
-      LocalRegion region, List<InitialImageOperation.Entry> giiEntriesToSynchronize) {
+      LocalRegion region, List<InitialImageOperation.Entry> giiEntriesToSynchronize,
+      InternalCache cache) {
     this.recipient = recipient;
     this.region = region;
+    this.cache = cache;
     initializeEntriesToSynchronize(giiEntriesToSynchronize);
   }
 
@@ -93,8 +97,8 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
     }
   }
 
-  protected GemFireCacheImpl getCache() {
-    return (GemFireCacheImpl) CacheFactory.getAnyInstance();
+  public InternalCache getInternalCache() {
+    return this.cache;
   }
 
   private void initializeEntriesToSynchronize(
@@ -155,14 +159,10 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
 
     private void putSynchronizationEvents(Map<String, GatewayQueueEvent> senderIdsAndEvents) {
       for (Map.Entry<String, GatewayQueueEvent> senderIdAndEvent : senderIdsAndEvents.entrySet()) {
-        AbstractGatewaySender sender =
-            (AbstractGatewaySender) getCache().getGatewaySender(senderIdAndEvent.getKey());
+        AbstractGatewaySender sender = (AbstractGatewaySender) this.operation.getInternalCache()
+            .getGatewaySender(senderIdAndEvent.getKey());
         sender.putSynchronizationEvent(senderIdAndEvent.getValue());
       }
-    }
-
-    private Cache getCache() {
-      return CacheFactory.getAnyInstance();
     }
   }
 
@@ -172,6 +172,7 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
     private int processorId;
 
     private String regionPath;
+    private InternalCache cache;
 
     private List<GatewaySenderQueueEntrySynchronizationEntry> entriesToSynchronize;
 
@@ -185,6 +186,7 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
       this.processorId = processorId;
       this.regionPath = operation.region.getFullPath();
       this.entriesToSynchronize = operation.entriesToSynchronize;
+      this.cache = operation.getInternalCache();
     }
 
     @Override
@@ -219,12 +221,11 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
     private Object getSynchronizationEvents() {
       List<Map<String, GatewayQueueEvent>> results = new ArrayList<>();
       // Get the region
-      GemFireCacheImpl gfci = (GemFireCacheImpl) getCache();
-      LocalRegion region = (LocalRegion) gfci.getRegion(this.regionPath);
+      LocalRegion region = (LocalRegion) this.cache.getRegion(this.regionPath);
 
       // Add the appropriate GatewaySenderEventImpl from each GatewaySender for each entry
       Set<String> allGatewaySenderIds = region.getAllGatewaySenderIds();
-      for (GatewaySender sender : gfci.getAllGatewaySenders()) {
+      for (GatewaySender sender : this.cache.getAllGatewaySenders()) {
         if (allGatewaySenderIds.contains(sender.getId())) {
           for (GatewaySenderQueueEntrySynchronizationEntry entry : this.entriesToSynchronize) {
             Map<String, GatewayQueueEvent> resultForOneEntry = new HashMap<>();
@@ -239,10 +240,6 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
       }
 
       return results;
-    }
-
-    private Cache getCache() {
-      return CacheFactory.getAnyInstance();
     }
 
     @Override

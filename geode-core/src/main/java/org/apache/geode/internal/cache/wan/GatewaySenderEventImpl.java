@@ -33,15 +33,7 @@ import org.apache.geode.internal.DataSerializableFixedID;
 import org.apache.geode.internal.InternalDataSerializer;
 import org.apache.geode.internal.Version;
 import org.apache.geode.internal.VersionedDataInputStream;
-import org.apache.geode.internal.cache.CachedDeserializable;
-import org.apache.geode.internal.cache.CachedDeserializableFactory;
-import org.apache.geode.internal.cache.Conflatable;
-import org.apache.geode.internal.cache.EntryEventImpl;
-import org.apache.geode.internal.cache.EnumListenerEvent;
-import org.apache.geode.internal.cache.EventID;
-import org.apache.geode.internal.cache.LocalRegion;
-import org.apache.geode.internal.cache.Token;
-import org.apache.geode.internal.cache.WrappedCallbackArgument;
+import org.apache.geode.internal.cache.*;
 import org.apache.geode.internal.i18n.LocalizedStrings;
 import org.apache.geode.internal.offheap.OffHeapHelper;
 import org.apache.geode.internal.offheap.ReferenceCountHelper;
@@ -206,6 +198,7 @@ public class GatewaySenderEventImpl
   private static final int DEFAULT_SERIALIZED_VALUE_SIZE = -1;
 
   private volatile int serializedValueSize = DEFAULT_SERIALIZED_VALUE_SIZE;
+  private InternalCache cache;
 
   // /**
   // * Is this thread in the process of deserializing this event?
@@ -231,18 +224,20 @@ public class GatewaySenderEventImpl
    * @param event The <code>CacheEvent</code> on which this <code>GatewayEventImpl</code> is based
    * @param substituteValue The value to be enqueued instead of the value in the event.
    *
+   * @param cache
    * @throws IOException
    */
   @Retained
   public GatewaySenderEventImpl(EnumListenerEvent operation, CacheEvent event,
-      Object substituteValue) throws IOException {
-    this(operation, event, substituteValue, true);
+      Object substituteValue, InternalCache cache) throws IOException {
+    this(operation, event, substituteValue, true, cache);
   }
 
   @Retained
   public GatewaySenderEventImpl(EnumListenerEvent operation, CacheEvent event,
-      Object substituteValue, boolean initialize, int bucketId) throws IOException {
-    this(operation, event, substituteValue, initialize);
+      Object substituteValue, boolean initialize, int bucketId, InternalCache cache)
+      throws IOException {
+    this(operation, event, substituteValue, initialize, cache);
     this.bucketId = bucketId;
   }
 
@@ -258,7 +253,8 @@ public class GatewaySenderEventImpl
    */
   @Retained
   public GatewaySenderEventImpl(EnumListenerEvent operation, CacheEvent ce, Object substituteValue,
-      boolean initialize) throws IOException {
+      boolean initialize, InternalCache cache) throws IOException {
+    this.cache = cache;
     // Set the operation and event
     final EntryEventImpl event = (EntryEventImpl) ce;
     this.operation = operation;
@@ -1120,8 +1116,7 @@ public class GatewaySenderEventImpl
   public Region<?, ?> getRegion() {
     // The region will be null mostly for the other node where the gateway event
     // is serialized
-    return this.region != null ? this.region
-        : CacheFactory.getAnyInstance().getRegion(this.regionPath);
+    return this.region != null ? this.region : this.cache.getRegion(this.regionPath);
   }
 
   public int getBucketId() {

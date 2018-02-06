@@ -42,7 +42,6 @@ import org.apache.geode.cache.wan.GatewaySender;
 import org.apache.geode.distributed.DistributedSystem;
 import org.apache.geode.internal.Assert;
 import org.apache.geode.internal.cache.DistributedRegion;
-import org.apache.geode.internal.cache.EntryEventImpl;
 import org.apache.geode.internal.cache.EnumListenerEvent;
 import org.apache.geode.internal.cache.EventID;
 import org.apache.geode.internal.cache.wan.AbstractGatewaySender;
@@ -423,8 +422,9 @@ public class SerialGatewaySenderEventProcessor extends AbstractGatewaySenderEven
         } else {
           // If it is not, create an uninitialized GatewayEventImpl and
           // put it into the map of unprocessed events.
-          senderEvent = new GatewaySenderEventImpl(operation, event, substituteValue, false); // OFFHEAP
-                                                                                              // ok
+          senderEvent = new GatewaySenderEventImpl(operation, event, substituteValue, false,
+              sender.getCache()); // OFFHEAP
+          // ok
           handleSecondaryEvent(senderEvent);
         }
       }
@@ -437,7 +437,9 @@ public class SerialGatewaySenderEventProcessor extends AbstractGatewaySenderEven
         waitForFailoverCompletion();
       }
       // If it is, create and enqueue an initialized GatewayEventImpl
-      senderEvent = new GatewaySenderEventImpl(operation, event, substituteValue); // OFFHEAP ok
+      senderEvent =
+          new GatewaySenderEventImpl(operation, event, substituteValue, sender.getCache()); // OFFHEAP
+                                                                                            // ok
 
       boolean queuedEvent = false;
       try {
