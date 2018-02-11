@@ -26,8 +26,6 @@ import java.util.Set;
 import org.apache.logging.log4j.Logger;
 
 import org.apache.geode.DataSerializer;
-import org.apache.geode.cache.Cache;
-import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.cache.wan.GatewayQueueEvent;
 import org.apache.geode.cache.wan.GatewaySender;
 import org.apache.geode.distributed.internal.ClusterDistributionManager;
@@ -41,8 +39,8 @@ import org.apache.geode.distributed.internal.ReplyProcessor21;
 import org.apache.geode.distributed.internal.membership.InternalDistributedMember;
 import org.apache.geode.internal.DataSerializableFixedID;
 import org.apache.geode.internal.Version;
-import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.cache.InitialImageOperation;
+import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.InternalRegion;
 import org.apache.geode.internal.cache.LocalRegion;
 import org.apache.geode.internal.cache.versions.VersionTag;
@@ -94,10 +92,6 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
     }
   }
 
-  protected GemFireCacheImpl getCache() {
-    return (GemFireCacheImpl) CacheFactory.getAnyInstance();
-  }
-
   private void initializeEntriesToSynchronize(
       List<InitialImageOperation.Entry> giiEntriesToSynchronize) {
     this.entriesToSynchronize = new ArrayList<>();
@@ -110,6 +104,7 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
   public static class GatewaySenderQueueEntrySynchronizationReplyProcessor
       extends ReplyProcessor21 {
 
+    private final InternalCache cache;
     private GatewaySenderQueueEntrySynchronizationOperation operation;
 
     public GatewaySenderQueueEntrySynchronizationReplyProcessor(DistributionManager dm,
@@ -117,6 +112,7 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
         GatewaySenderQueueEntrySynchronizationOperation operation) {
       super(dm, recipient);
       this.operation = operation;
+      this.cache = dm.getCache();
     }
 
     @Override
@@ -144,7 +140,7 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
                     new Object[] {reply.getSender(), this.operation.region.getFullPath(), entry.key,
                         entry.entryVersion}));
               } else {
-                putSynchronizationEvents(eventsForOneEntry);
+                putSynchronizationEvents(eventsForOneEntry, this.cache);
               }
             }
           }
@@ -154,16 +150,13 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
       }
     }
 
-    private void putSynchronizationEvents(Map<String, GatewayQueueEvent> senderIdsAndEvents) {
+    private void putSynchronizationEvents(Map<String, GatewayQueueEvent> senderIdsAndEvents,
+        InternalCache cache) {
       for (Map.Entry<String, GatewayQueueEvent> senderIdAndEvent : senderIdsAndEvents.entrySet()) {
         AbstractGatewaySender sender =
-            (AbstractGatewaySender) getCache().getGatewaySender(senderIdAndEvent.getKey());
+            (AbstractGatewaySender) cache.getGatewaySender(senderIdAndEvent.getKey());
         sender.putSynchronizationEvent(senderIdAndEvent.getValue());
       }
-    }
-
-    private Cache getCache() {
-      return CacheFactory.getAnyInstance();
     }
   }
 
@@ -197,7 +190,7 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
           logger.debug("{}: Providing synchronization region={}; entriesToSynchronize={}",
               getClass().getSimpleName(), this.regionPath, this.entriesToSynchronize);
         }
-        result = getSynchronizationEvents();
+        result = getSynchronizationEvents(dm.getCache());
       } catch (Throwable t) {
         replyException = new ReplyException(t);
       } finally {
@@ -217,15 +210,14 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
       }
     }
 
-    private Object getSynchronizationEvents() {
+    private Object getSynchronizationEvents(InternalCache cache) {
       List<Map<String, GatewayQueueEvent>> results = new ArrayList<>();
       // Get the region
-      GemFireCacheImpl gfci = (GemFireCacheImpl) getCache();
-      LocalRegion region = (LocalRegion) gfci.getRegion(this.regionPath);
+      LocalRegion region = (LocalRegion) cache.getRegion(this.regionPath);
 
       // Add the appropriate GatewaySenderEventImpl from each GatewaySender for each entry
       Set<String> allGatewaySenderIds = region.getAllGatewaySenderIds();
-      for (GatewaySender sender : gfci.getAllGatewaySenders()) {
+      for (GatewaySender sender : cache.getAllGatewaySenders()) {
         if (allGatewaySenderIds.contains(sender.getId())) {
           for (GatewaySenderQueueEntrySynchronizationEntry entry : this.entriesToSynchronize) {
             Map<String, GatewayQueueEvent> resultForOneEntry = new HashMap<>();
@@ -240,10 +232,6 @@ public class GatewaySenderQueueEntrySynchronizationOperation {
       }
 
       return results;
-    }
-
-    private Cache getCache() {
-      return CacheFactory.getAnyInstance();
     }
 
     @Override
