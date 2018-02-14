@@ -523,7 +523,8 @@ public class AcceptorImpl implements Acceptor, Runnable, CommBufferPool {
           LocalizedStrings.AcceptorImpl_CACHE_SERVER_CONNECTION_LISTENER_BOUND_TO_ADDRESS_0_WITH_BACKLOG_1,
           new Object[] {sockName, Integer.valueOf(backLog)}));
       if (isGatewayReceiver) {
-        this.stats = GatewayReceiverStats.createGatewayReceiverStats(sockName);
+        this.stats = GatewayReceiverStats.createGatewayReceiverStats(sockName,
+            InternalDistributedSystem.getConnectedInstance());
       } else {
         this.stats = new CacheServerStats(sockName);
       }

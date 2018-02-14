@@ -36,7 +36,7 @@ public class GatewayReceiverStatsJUnitTest extends MBeanStatsTestCase {
   private GatewayReceiverStats receiverStats;
 
   public void init() {
-    receiverStats = GatewayReceiverStats.createGatewayReceiverStats("Test Sock Name");
+    receiverStats = GatewayReceiverStats.createGatewayReceiverStats("Test Sock Name", system);
 
     bridge = new GatewayReceiverMBeanBridge();
     bridge.addGatewayReceiverStats(receiverStats);

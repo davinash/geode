@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Logger;
 
-import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.asyncqueue.AsyncEventListener;
 import org.apache.geode.cache.client.internal.LocatorDiscoveryCallback;
 import org.apache.geode.cache.wan.GatewayEventFilter;
@@ -27,7 +26,6 @@ import org.apache.geode.cache.wan.GatewaySender;
 import org.apache.geode.cache.wan.GatewaySender.OrderPolicy;
 import org.apache.geode.cache.wan.GatewaySenderFactory;
 import org.apache.geode.cache.wan.GatewayTransportFilter;
-import org.apache.geode.distributed.internal.InternalDistributedSystem;
 import org.apache.geode.internal.cache.GemFireCacheImpl;
 import org.apache.geode.internal.cache.InternalCache;
 import org.apache.geode.internal.cache.wan.parallel.ParallelGatewaySenderImpl;
@@ -174,8 +172,8 @@ public class GatewaySenderFactoryImpl implements InternalGatewaySenderFactory {
   }
 
   public GatewaySender create(String id, int remoteDSId) {
-    int myDSId = InternalDistributedSystem.getAnyInstance().getDistributionManager()
-        .getDistributedSystemId();
+    int myDSId = this.cache.getDistributionManager().getDistributedSystemId();
+
     if (remoteDSId == myDSId) {
       throw new GatewaySenderException(
           LocalizedStrings.GatewaySenderImpl_GATEWAY_0_CANNOT_BE_CREATED_WITH_REMOTE_SITE_ID_EQUAL_TO_THIS_SITE_ID
