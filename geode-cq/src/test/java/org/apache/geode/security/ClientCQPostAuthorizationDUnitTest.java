@@ -350,7 +350,7 @@ public class ClientCQPostAuthorizationDUnitTest extends ClientAuthorizationTestC
     WaitCriterion wc = new WaitCriterion() {
       @Override
       public boolean done() {
-        CqService cqService = GemFireCacheImpl.getInstance().getCqService();
+        CqService cqService = basicGetCache().getCqService();
         cqService.start();
         Collection<? extends InternalCqQuery> cqs = cqService.getAllCqs();
         if (cqs != null) {

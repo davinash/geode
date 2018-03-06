@@ -81,7 +81,7 @@ public class MultiUserAPIDUnitTest extends ClientAuthorizationTestCase {
       try {
         // Attempt cache.createAuthenticatedCacheView() and expect an exception, fail otherwise
         op = "Pool.createSecureUserCache()";
-        GemFireCacheImpl.getInstance().createAuthenticatedView(new Properties(), "testPool");
+        ((GemFireCacheImpl) basicGetCache()).createAuthenticatedView(new Properties(), "testPool");
       } catch (IllegalStateException uoe) {
         getLogWriter().info(op + ": Got expected exception: " + uoe);
         success = true;
@@ -92,7 +92,7 @@ public class MultiUserAPIDUnitTest extends ClientAuthorizationTestCase {
       }
 
     } else { // multiuser mode
-      Region realRegion = GemFireCacheImpl.getInstance().getRegion(SecurityTestUtils.REGION_NAME);
+      Region realRegion = basicGetCache().getRegion(SecurityTestUtils.REGION_NAME);
       Region proxyRegion =
           SecurityTestUtils.getProxyCaches(0).getRegion(SecurityTestUtils.REGION_NAME);
       Pool pool = PoolManagerImpl.getPMI().find("testPool");

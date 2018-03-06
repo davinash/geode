@@ -1310,7 +1310,7 @@ public class PartitionedRegionCqQueryDUnitTest extends JUnit4CacheTestCase {
   }
 
   private static String[] getCqs() {
-    CqQuery[] cqs = CacheFactory.getAnyInstance().getQueryService().getCqs();
+    CqQuery[] cqs = basicGetCache().getQueryService().getCqs();
 
     String[] cqnames = new String[cqs.length];
     int idx = 0;
@@ -1322,7 +1322,7 @@ public class PartitionedRegionCqQueryDUnitTest extends JUnit4CacheTestCase {
   }
 
   private static int getCqCountFromRegionProfile() {
-    LocalRegion region1 = (LocalRegion) CacheFactory.getAnyInstance().getRegion("/root/regionA");
+    LocalRegion region1 = (LocalRegion) basicGetCache().getRegion("/root/regionA");
     return region1.getFilterProfile().getCqCount();
   }
 

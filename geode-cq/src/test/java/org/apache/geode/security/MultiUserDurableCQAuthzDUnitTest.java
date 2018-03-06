@@ -14,11 +14,16 @@
  */
 package org.apache.geode.security;
 
-import static org.apache.geode.internal.AvailablePort.*;
-import static org.apache.geode.security.SecurityTestUtils.*;
-import static org.apache.geode.test.dunit.Assert.*;
-import static org.apache.geode.test.dunit.Invoke.*;
-import static org.apache.geode.test.dunit.LogWriterUtils.*;
+import static org.apache.geode.security.SecurityTestUtils.NO_EXCEPTION;
+import static org.apache.geode.security.SecurityTestUtils.concatProperties;
+import static org.apache.geode.security.SecurityTestUtils.createCacheClientForMultiUserMode;
+import static org.apache.geode.security.SecurityTestUtils.createProxyCache;
+import static org.apache.geode.security.SecurityTestUtils.getProxyCaches;
+import static org.apache.geode.test.dunit.Assert.assertEquals;
+import static org.apache.geode.test.dunit.Assert.assertTrue;
+import static org.apache.geode.test.dunit.Assert.fail;
+import static org.apache.geode.test.dunit.Invoke.invokeInEveryVM;
+import static org.apache.geode.test.dunit.LogWriterUtils.getLogWriter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +34,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import org.apache.geode.cache.Region;
+import org.apache.geode.cache.client.ClientCacheFactory;
 import org.apache.geode.cache.operations.OperationContext.OperationCode;
 import org.apache.geode.cache.query.CqAttributes;
 import org.apache.geode.cache.query.CqAttributesFactory;
@@ -203,7 +209,7 @@ public class MultiUserDurableCQAuthzDUnitTest extends ClientAuthorizationTestCas
     if (keepAlive == null) {
       client1.invoke(() -> closeCache());
     } else {
-      client1.invoke(() -> closeCache(keepAlive));
+      client1.invoke(() -> ClientCacheFactory.getAnyInstance().close(keepAlive));
     }
 
     server1.invoke(() -> doPuts(numOfPuts, true/* put last key */));
@@ -250,7 +256,7 @@ public class MultiUserDurableCQAuthzDUnitTest extends ClientAuthorizationTestCas
   }
 
   private void readyForEvents() {
-    GemFireCacheImpl.getInstance().readyForEvents();
+    ClientCacheFactory.getAnyInstance().readyForEvents();
   }
 
   /**
@@ -338,7 +344,7 @@ public class MultiUserDurableCQAuthzDUnitTest extends ClientAuthorizationTestCas
   }
 
   private void doPuts(final int num, final boolean putLastKey) {
-    Region region = GemFireCacheImpl.getInstance().getRegion(regionName);
+    Region region = basicGetCache().getRegion(regionName);
     for (int i = 0; i < num; i++) {
       region.put("CQ_key" + i, "CQ_value" + i);
     }

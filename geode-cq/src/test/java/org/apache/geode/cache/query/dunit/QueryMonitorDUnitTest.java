@@ -188,7 +188,7 @@ public class QueryMonitorDUnitTest extends JUnit4CacheTestCase {
       File[] f = new File[1];
       f[0] = new File(dirName);
       f[0].mkdir();
-      DiskStoreFactory dsf = GemFireCacheImpl.getInstance().createDiskStoreFactory();
+      DiskStoreFactory dsf = basicGetCache().createDiskStoreFactory();
       DiskStore ds1 = dsf.setDiskDirs(f).create("ds1");
       factory.setDiskStoreName("ds1");
       EvictionAttributes evictAttrs =
@@ -333,16 +333,16 @@ public class QueryMonitorDUnitTest extends JUnit4CacheTestCase {
       QueryService queryService = pool.getQueryService();
       executeQueriesAgainstQueryService(queryService);
     } catch (Exception ex) {
-      GemFireCacheImpl.getInstance().getLogger().fine("Exception creating the query service", ex);
+      basicGetCache().getLogger().fine("Exception creating the query service", ex);
     }
   }
 
   private void executeQueriesOnServer() {
     try {
-      QueryService queryService = GemFireCacheImpl.getInstance().getQueryService();
+      QueryService queryService = basicGetCache().getQueryService();
       executeQueriesAgainstQueryService(queryService);
     } catch (Exception ex) {
-      GemFireCacheImpl.getInstance().getLogger().fine("Exception creating the query service", ex);
+      basicGetCache().getLogger().fine("Exception creating the query service", ex);
     }
   }
 
@@ -355,7 +355,7 @@ public class QueryMonitorDUnitTest extends JUnit4CacheTestCase {
 
   private void executeQuery(QueryService queryService, String qStr) {
     try {
-      GemFireCacheImpl.getInstance().getLogger().fine("Executing query :" + qStr);
+      basicGetCache().getLogger().fine("Executing query :" + qStr);
       Query query = queryService.newQuery(qStr);
       query.execute();
       fail("The query should have been canceled by the QueryMonitor. Query: " + qStr);
@@ -540,7 +540,7 @@ public class QueryMonitorDUnitTest extends JUnit4CacheTestCase {
     SerializableRunnable executeQuery = new CacheSerializableRunnable("Execute queries") {
       public void run2() throws CacheException {
         try {
-          QueryService queryService = GemFireCacheImpl.getInstance().getQueryService();
+          QueryService queryService = basicGetCache().getQueryService();
           String qStr =
               "SELECT DISTINCT * FROM /root/exampleRegion p, (SELECT DISTINCT pos FROM /root/exampleRegion x, x.positions.values pos"
                   + " WHERE  x.ID = p.ID) as itrX";
@@ -846,7 +846,7 @@ public class QueryMonitorDUnitTest extends JUnit4CacheTestCase {
 
     try {
       // create index.
-      QueryService cacheQS = GemFireCacheImpl.getInstance().getQueryService();
+      QueryService cacheQS = basicGetCache().getQueryService();
       cacheQS.createIndex("idIndex", IndexType.FUNCTIONAL, "p.ID", "/root/exampleRegion p");
       cacheQS.createIndex("statusIndex", IndexType.FUNCTIONAL, "p.status", "/root/exampleRegion p");
       cacheQS.createIndex("secIdIndex", IndexType.FUNCTIONAL, "pos.secId",
@@ -982,7 +982,7 @@ public class QueryMonitorDUnitTest extends JUnit4CacheTestCase {
     server1.invoke(new CacheSerializableRunnable("Create Bridge Server") {
       public void run2() throws CacheException {
         try {
-          QueryService queryService = GemFireCacheImpl.getInstance().getQueryService();
+          QueryService queryService = basicGetCache().getQueryService();
           queryService.createIndex("statusIndex", IndexType.FUNCTIONAL, "status",
               "/root/exampleRegion");
           queryService.createIndex("secIdIndex", IndexType.FUNCTIONAL, "pos.secId",
@@ -1031,7 +1031,7 @@ public class QueryMonitorDUnitTest extends JUnit4CacheTestCase {
       public void run2() throws CacheException {
         try {
           Region exampleRegion = getRootRegion().getSubregion(exampleRegionName);
-          QueryService queryService = GemFireCacheImpl.getInstance().getQueryService();
+          QueryService queryService = basicGetCache().getQueryService();
           String qStr =
               "SELECT DISTINCT * FROM /root/exampleRegion p, p.positions.values pos1, p.positions.values pos"
                   + " where p.ID < pos.sharesOutstanding OR p.ID > 0 OR p.position1.mktValue > 0 "
@@ -1040,7 +1040,7 @@ public class QueryMonitorDUnitTest extends JUnit4CacheTestCase {
                   + " order by p.status, p.ID desc";
           for (int i = 0; i < 500; i++) {
             try {
-              GemFireCacheImpl.getInstance().getLogger().info("Executing query :" + qStr);
+              basicGetCache().getLogger().info("Executing query :" + qStr);
               Query query = queryService.newQuery(qStr);
               query.execute();
             } catch (QueryExecutionTimeoutException qet) {

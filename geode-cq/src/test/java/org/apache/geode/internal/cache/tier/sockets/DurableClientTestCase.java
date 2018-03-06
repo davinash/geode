@@ -64,6 +64,7 @@ import org.apache.geode.test.dunit.NetworkUtils;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.Wait;
 import org.apache.geode.test.dunit.WaitCriterion;
+import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
 import org.apache.geode.test.junit.categories.DistributedTest;
 
@@ -73,7 +74,7 @@ import org.apache.geode.test.junit.categories.DistributedTest;
  * @since GemFire 5.2
  */
 @Category(DistributedTest.class)
-public class DurableClientTestCase extends JUnit4DistributedTestCase {
+public class DurableClientTestCase extends JUnit4CacheTestCase {
 
   protected static volatile boolean isPrimaryRecovered = false;
 
@@ -101,7 +102,7 @@ public class DurableClientTestCase extends JUnit4DistributedTestCase {
   protected void postSetUpDurableClientTestCase() throws Exception {}
 
   @Override
-  public final void preTearDown() throws Exception {
+  public final void preTearDownCacheTestCase() throws Exception {
     preTearDownDurableClientTestCase();
 
     this.durableClientVM.invoke(() -> CacheServerTestUtil.closeCache());
@@ -1671,7 +1672,7 @@ public class DurableClientTestCase extends JUnit4DistributedTestCase {
   public static void verifyReceivedMarkerAck(final CacheClientProxy proxy) {
     WaitCriterion ev = new WaitCriterion() {
       public boolean done() {
-        GemFireCacheImpl.getInstance().getLoggerI18n()
+        basicGetCache().getLoggerI18n()
             .fine("DurableClientDUnitTest->WaitCriterion :: done called");
         return checkForAck(proxy);
       }

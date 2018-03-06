@@ -26,9 +26,7 @@ import static org.apache.geode.security.SecurityTestUtils.NVALUES;
 import static org.apache.geode.security.SecurityTestUtils.OTHER_EXCEPTION;
 import static org.apache.geode.security.SecurityTestUtils.REGION_NAME;
 import static org.apache.geode.security.SecurityTestUtils.VALUES;
-import static org.apache.geode.security.SecurityTestUtils.closeCache;
 import static org.apache.geode.security.SecurityTestUtils.concatProperties;
-import static org.apache.geode.security.SecurityTestUtils.getCache;
 import static org.apache.geode.security.SecurityTestUtils.getLocalValue;
 import static org.apache.geode.security.SecurityTestUtils.registerExpectedExceptions;
 import static org.apache.geode.security.SecurityTestUtils.waitForCondition;
@@ -88,7 +86,7 @@ import org.apache.geode.security.templates.UsernamePrincipal;
 import org.apache.geode.test.dunit.Host;
 import org.apache.geode.test.dunit.VM;
 import org.apache.geode.test.dunit.WaitCriterion;
-import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
+import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
 import org.apache.geode.test.dunit.standalone.VersionManager;
 
 /**
@@ -97,7 +95,7 @@ import org.apache.geode.test.dunit.standalone.VersionManager;
  *
  * @since GemFire 5.5
  */
-public abstract class ClientAuthorizationTestCase extends JUnit4DistributedTestCase {
+public abstract class ClientAuthorizationTestCase extends JUnit4CacheTestCase {
 
   private static final int PAUSE = 5 * 1000;
 
@@ -182,7 +180,7 @@ public abstract class ClientAuthorizationTestCase extends JUnit4DistributedTestC
   protected void postSetUpClientAuthorizationTestBase() throws Exception {}
 
   @Override
-  public final void preTearDown() throws Exception {
+  public final void preTearDownCacheTestCase() throws Exception {
     preTearDownClientAuthorizationTestBase();
     tearDownClientAuthorizationTestBase();
     postTearDownClientAuthorizationTestBase();
@@ -250,11 +248,11 @@ public abstract class ClientAuthorizationTestCase extends JUnit4DistributedTestC
   }
 
   protected static Region getRegion() {
-    return getCache().getRegion(regionName);
+    return basicGetCache().getRegion(regionName);
   }
 
   protected static Region getSubregion() {
-    return getCache().getRegion(regionName + '/' + SUBREGION_NAME);
+    return basicGetCache().getRegion(regionName + '/' + SUBREGION_NAME);
   }
 
   private static Region createSubregion(final Region region) {
@@ -416,7 +414,7 @@ public abstract class ClientAuthorizationTestCase extends JUnit4DistributedTestC
             value = getLocalValue(region, key);
 
           } else if ((flags & OpFlags.USE_GET_ENTRY_IN_TX) > 0) {
-            getCache().getCacheTransactionManager().begin();
+            basicGetCache().getCacheTransactionManager().begin();
             Entry e = region.getEntry(key);
 
             // Also, check getAll()
@@ -424,7 +422,7 @@ public abstract class ClientAuthorizationTestCase extends JUnit4DistributedTestC
             a.addAll(a);
             region.getAll(a);
 
-            getCache().getCacheTransactionManager().commit();
+            basicGetCache().getCacheTransactionManager().commit();
             value = e.getValue();
 
           } else {
@@ -597,7 +595,7 @@ public abstract class ClientAuthorizationTestCase extends JUnit4DistributedTestC
 
         } else if (op.isExecuteCQ()) {
           breakLoop = true;
-          QueryService queryService = getCache().getQueryService();
+          QueryService queryService = basicGetCache().getQueryService();
           CqQuery cqQuery;
           if ((cqQuery = queryService.getCq("cq1")) == null) {
             CqAttributesFactory cqFact = new CqAttributesFactory();
@@ -665,13 +663,13 @@ public abstract class ClientAuthorizationTestCase extends JUnit4DistributedTestC
 
         } else if (op.isStopCQ()) {
           breakLoop = true;
-          CqQuery cqQuery = getCache().getQueryService().getCq("cq1");
+          CqQuery cqQuery = basicGetCache().getQueryService().getCq("cq1");
           ((AuthzCqListener) cqQuery.getCqAttributes().getCqListener()).reset();
           cqQuery.stop();
 
         } else if (op.isCloseCQ()) {
           breakLoop = true;
-          CqQuery cqQuery = getCache().getQueryService().getCq("cq1");
+          CqQuery cqQuery = basicGetCache().getQueryService().getCq("cq1");
           ((AuthzCqListener) cqQuery.getCqAttributes().getCqListener()).reset();
           cqQuery.close();
 

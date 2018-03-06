@@ -55,12 +55,13 @@ import org.apache.geode.test.dunit.NetworkUtils;
 import org.apache.geode.test.dunit.SerializableCallable;
 import org.apache.geode.test.dunit.SerializableRunnable;
 import org.apache.geode.test.dunit.VM;
+import org.apache.geode.test.dunit.cache.internal.JUnit4CacheTestCase;
 import org.apache.geode.test.dunit.internal.JUnit4DistributedTestCase;
 
 /**
  *
  */
-public abstract class LocatorTestBase extends JUnit4DistributedTestCase {
+public abstract class LocatorTestBase extends JUnit4CacheTestCase {
   protected static final String CACHE_KEY = "CACHE";
   protected static final String LOCATOR_KEY = "LOCATOR";
   protected static final String REGION_NAME = "A_REGION";
@@ -77,7 +78,7 @@ public abstract class LocatorTestBase extends JUnit4DistributedTestCase {
   }
 
   @Override
-  public final void preTearDown() throws Exception {
+  public final void preTearDownCacheTestCase() throws Exception {
 
     SerializableRunnable tearDown = new SerializableRunnable("tearDown") {
       public void run() {

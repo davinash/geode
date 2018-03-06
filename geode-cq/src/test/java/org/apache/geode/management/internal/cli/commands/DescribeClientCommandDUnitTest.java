@@ -408,7 +408,7 @@ public class DescribeClientCommandDUnitTest extends CliCommandTestBase {
     startNonSubscribedClient(client2, server1, port0);
     waitForMixedClients();
     return manager.invoke("get client Ids", () -> {
-      Cache cache = GemFireCacheImpl.getInstance();
+      Cache cache = basicGetCache();
       SystemManagementService service =
           (SystemManagementService) ManagementService.getExistingManagementService(cache);
       DistributedMember serverMember = getMember(server1);
@@ -531,7 +531,7 @@ public class DescribeClientCommandDUnitTest extends CliCommandTestBase {
 
   private void startNonDurableClient(VM client, final VM server, final int port) {
     client.invoke("start non-durable client", () -> {
-      Cache cache = GemFireCacheImpl.getInstance();
+      Cache cache = basicGetCache();
       if (cache == null) {
 
         Properties props = getNonDurableClientProps();
@@ -663,7 +663,7 @@ public class DescribeClientCommandDUnitTest extends CliCommandTestBase {
 
   private void startNonSubscribedClient(VM client, final VM server, final int port) {
     client.invoke("Start client", () -> {
-      Cache cache = GemFireCacheImpl.getInstance();
+      Cache cache = basicGetCache();
       if (cache == null) {
         Properties props = getNonDurableClientProps();
         props.setProperty(LOG_FILE, "client_" + OSProcess.getId() + ".log");
@@ -764,7 +764,7 @@ public class DescribeClientCommandDUnitTest extends CliCommandTestBase {
   }
 
   private String getClientIdString(VM server1) throws Exception {
-    Cache cache = GemFireCacheImpl.getInstance();
+    Cache cache = basicGetCache();
     SystemManagementService service =
         (SystemManagementService) ManagementService.getExistingManagementService(cache);
     DistributedMember serverMember = getMember(server1);

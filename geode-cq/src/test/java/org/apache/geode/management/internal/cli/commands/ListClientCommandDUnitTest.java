@@ -220,7 +220,7 @@ public class ListClientCommandDUnitTest extends CliCommandTestBase {
     waitForListClientMbean3();
 
     manager.invoke("get client Id", () -> {
-      Cache cache = GemFireCacheImpl.getInstance();
+      Cache cache = basicGetCache();
       SystemManagementService service =
           (SystemManagementService) ManagementService.getExistingManagementService(cache);
       DistributedMember serverMember = ClientCommandsTestUtils.getMember(server1);
@@ -308,7 +308,7 @@ public class ListClientCommandDUnitTest extends CliCommandTestBase {
 
   private void startNonDurableClient(VM client, final VM server, final int port) {
     client.invoke("start non-durable client", () -> {
-      Cache cache = GemFireCacheImpl.getInstance();
+      Cache cache = basicGetCache();
       if (cache == null) {
 
         Properties props = ClientCommandsTestUtils.getNonDurableClientProps();

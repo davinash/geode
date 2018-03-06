@@ -613,7 +613,7 @@ public class RemoteCQTransactionDUnitTest extends JUnit4CacheTestCase {
       r = getGemfireCache().getRegion(CUSTOMER);
       getGemfireCache().getLogger().fine("SWAP:callingPut");
       r.put(expectedCustId, expectedCustomer);
-      GemFireCacheImpl.getInstance().getLogger().warning(" XXX DOIN A PUT ", new Exception());
+      basicGetCache().getLogger().warning(" XXX DOIN A PUT ", new Exception());
       context.getResultSender().lastResult(Boolean.TRUE);
     }
 

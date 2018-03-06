@@ -50,12 +50,12 @@ class ClientCommandsTestUtils extends CliCommandTestBase {
   }
 
   static String getDistributedMemberId() {
-    return GemFireCacheImpl.getInstance().getDistributedSystem().getDistributedMember().getId();
+    return basicGetCache().getDistributedSystem().getDistributedMember().getId();
   }
 
   static DistributedMember getMember(final VM vm) {
     return vm.invoke("Get Member",
-        () -> GemFireCacheImpl.getInstance().getDistributedSystem().getDistributedMember());
+        () -> basicGetCache().getDistributedSystem().getDistributedMember());
   }
 
   static void closeNonDurableClient(final VM vm) {
@@ -64,7 +64,7 @@ class ClientCommandsTestUtils extends CliCommandTestBase {
 
   static void closeCacheServer(final VM vm) {
     vm.invoke("Stop client", () -> {
-      for (CacheServer cacheServer : CacheFactory.getAnyInstance().getCacheServers()) {
+      for (CacheServer cacheServer : basicGetCache().getCacheServers()) {
         cacheServer.stop();
       }
     });
@@ -79,7 +79,7 @@ class ClientCommandsTestUtils extends CliCommandTestBase {
 
   static void setupCqsOnVM(String cq1, String cq2, String cq3, String regionName, VM vm) {
     vm.invoke("setup CQs", () -> {
-      Cache cache = GemFireCacheImpl.getInstance();
+      Cache cache = basicGetCache();
       QueryService qs = cache.getQueryService();
       CqAttributesFactory cqAf = new CqAttributesFactory();
       try {
